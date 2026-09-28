@@ -1,7 +1,10 @@
 import bcrypt from 'bcrypt';
 import { createApp } from '../../src/app';
 import type { Config } from '../../src/config/config';
+import type { CountryRepository } from '../../src/repositories/country.repository';
+import type { EmployeeRepository } from '../../src/repositories/employee.repository';
 import { TEST_JWT_SECRET, TEST_PASSWORD, TEST_USERNAME } from './auth';
+import { InMemoryCountryRepository, InMemoryEmployeeRepository } from './fakeRepositories';
 
 export const TEST_ORIGIN = 'http://localhost:5173';
 
@@ -18,6 +21,18 @@ export const TEST_CONFIG: Config = {
   hrPasswordHash: bcrypt.hashSync(TEST_PASSWORD, 4),
 };
 
-export function buildTestApp() {
-  return createApp({ config: TEST_CONFIG, logger: { error: jest.fn() } });
+interface TestAppOptions {
+  employees?: EmployeeRepository;
+  countries?: CountryRepository;
+}
+
+export function buildTestApp({
+  employees = new InMemoryEmployeeRepository(),
+  countries = new InMemoryCountryRepository(),
+}: TestAppOptions = {}) {
+  return createApp({
+    config: TEST_CONFIG,
+    logger: { error: jest.fn() },
+    repositories: { employees, countries },
+  });
 }
