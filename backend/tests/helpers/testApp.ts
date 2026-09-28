@@ -1,6 +1,7 @@
 import bcrypt from 'bcrypt';
 import { createApp } from '../../src/app';
 import type { Config } from '../../src/config/config';
+import type { AnalyticsRepository } from '../../src/repositories/analytics.repository';
 import type { CountryRepository } from '../../src/repositories/country.repository';
 import type { EmployeeRepository } from '../../src/repositories/employee.repository';
 import { TEST_JWT_SECRET, TEST_PASSWORD, TEST_USERNAME } from './auth';
@@ -24,15 +25,17 @@ export const TEST_CONFIG: Config = {
 interface TestAppOptions {
   employees?: EmployeeRepository;
   countries?: CountryRepository;
+  analytics?: AnalyticsRepository;
 }
 
 export function buildTestApp({
   employees = new InMemoryEmployeeRepository(),
   countries = new InMemoryCountryRepository(),
+  analytics,
 }: TestAppOptions = {}) {
   return createApp({
     config: TEST_CONFIG,
     logger: { error: jest.fn() },
-    repositories: { employees, countries },
+    repositories: { employees, countries, analytics },
   });
 }
