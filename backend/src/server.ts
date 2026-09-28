@@ -13,7 +13,14 @@ try {
 // the API still boots, and employee endpoints answer 500 rather than the build breaking.
 const notBuiltYet = (): Promise<never> => Promise.reject(new Error('Database repositories are not built yet'));
 const repositories: Repositories = {
-  employees: { list: notBuiltYet, create: notBuiltYet, findById: notBuiltYet, update: notBuiltYet, delete: notBuiltYet },
+  employees: {
+    list: notBuiltYet,
+    create: notBuiltYet,
+    findById: notBuiltYet,
+    update: notBuiltYet,
+    delete: notBuiltYet,
+    getPeerStats: notBuiltYet,
+  },
   countries: { findByCode: notBuiltYet },
 };
 

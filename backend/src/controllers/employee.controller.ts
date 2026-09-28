@@ -1,6 +1,6 @@
 import type { RequestHandler } from 'express';
 import { EmployeeNotFoundError } from '../errors';
-import type { EmployeePage, EmployeeService, EmployeeWithCurrency } from '../services/employee.service';
+import type { EmployeePage, EmployeeService, EmployeeWithCurrency, PeerPosition } from '../services/employee.service';
 import type { EmployeeListParams, EmployeeRequest } from '../validation/employee.schemas';
 
 type IdParams = { id: string };
@@ -41,7 +41,11 @@ export function createEmployeeController(service: EmployeeService) {
     res.status(204).end();
   };
 
-  return { list, create, getById, update, remove };
+  const getPeerPosition: RequestHandler<IdParams, PeerPosition> = async (req, res) => {
+    res.status(200).json(await service.getPeerPosition(parseEmployeeId(req.params.id)));
+  };
+
+  return { list, create, getById, update, remove, getPeerPosition };
 }
 
 export type EmployeeController = ReturnType<typeof createEmployeeController>;

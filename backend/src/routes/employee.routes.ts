@@ -9,5 +9,6 @@ export function employeeRouter(controller: EmployeeController): Router {
     .post('/employees', validateBody(employeeSchema), controller.create)
     .get('/employees/:id', controller.getById)
     .put('/employees/:id', validateBody(employeeSchema), controller.update)
-    .delete('/employees/:id', controller.remove);
+    .delete('/employees/:id', controller.remove)
+    .get('/employees/:id/peer-position', controller.getPeerPosition);
 }

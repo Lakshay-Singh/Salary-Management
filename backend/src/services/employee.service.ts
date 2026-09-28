@@ -1,3 +1,4 @@
+import { peerLabel, type PeerLabel } from '../domain/peerPosition';
 import { EmployeeNotFoundError, ValidationError } from '../errors';
 import type { Country, CountryRepository } from '../repositories/country.repository';
 import type {
@@ -19,8 +20,17 @@ export interface EmployeePage {
   totalPages: number;
 }
 
+/** peerAverage and percentageDiff are null when there are too few peers to compare against. */
+export interface PeerPosition {
+  peerCount: number;
+  peerAverage: number | null;
+  percentageDiff: number | null;
+  label: PeerLabel;
+}
+
 export interface EmployeeService {
   list(query: EmployeeListQuery): Promise<EmployeePage>;
+  getPeerPosition(id: number): Promise<PeerPosition>;
   create(input: EmployeeInput): Promise<EmployeeWithCurrency>;
   getById(id: number): Promise<EmployeeWithCurrency>;
   update(id: number, input: EmployeeInput): Promise<EmployeeWithCurrency>;
@@ -80,6 +90,26 @@ export function createEmployeeService({ employees, countries }: EmployeeServiceD
         pageSize: query.pageSize,
         total,
         totalPages: Math.ceil(total / query.pageSize),
+      };
+    },
+
+    async getPeerPosition(id) {
+      const employee = await employees.findById(id);
+      if (!employee) throw new EmployeeNotFoundError(id);
+
+      const { peerCount, peerAverage } = await employees.getPeerStats(id);
+      const label = peerLabel(employee.salary, peerAverage ?? 0, peerCount);
+      if (label === 'Not enough peers' || peerAverage === null) {
+        return { peerCount, peerAverage: null, percentageDiff: null, label: 'Not enough peers' };
+      }
+
+      // The label uses the exact average; only the numbers shown to the user are rounded
+      const percentageDiff = ((employee.salary - peerAverage) / peerAverage) * 100;
+      return {
+        peerCount,
+        peerAverage: Math.round(peerAverage),
+        percentageDiff: Math.round(percentageDiff * 10) / 10,
+        label,
       };
     },
 

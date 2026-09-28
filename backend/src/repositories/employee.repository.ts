@@ -28,6 +28,12 @@ export interface EmployeeListResult {
   total: number;
 }
 
+/** Employees with the same country and job title, excluding the employee. The average is exact; null with no peers. */
+export interface PeerStats {
+  peerCount: number;
+  peerAverage: number | null;
+}
+
 export interface EmployeeRepository {
   list(query: EmployeeListQuery): Promise<EmployeeListResult>;
   create(input: EmployeeInput): Promise<Employee>;
@@ -36,4 +42,5 @@ export interface EmployeeRepository {
   update(id: number, input: EmployeeInput): Promise<Employee | null>;
   /** Resolves to false when no employee has this id. */
   delete(id: number): Promise<boolean>;
+  getPeerStats(id: number): Promise<PeerStats>;
 }
