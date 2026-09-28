@@ -2,9 +2,9 @@ import type { RequestHandler } from 'express';
 import { EmployeeNotFoundError } from '../errors';
 import type { EmployeePage, EmployeeService, EmployeeWithCurrency, PeerPosition } from '../services/employee.service';
 import type { EmployeeListParams, EmployeeRequest } from '../validation/employee.schemas';
+import type { NoParams } from './types';
 
 type IdParams = { id: string };
-type NoParams = Record<string, string>;
 type ValidatedQuery<Query> = { query: Query };
 
 // An id that can't exist, such as "abc", is simply an employee we don't have
