@@ -53,8 +53,16 @@ describe('GET /api/analytics/countries', () => {
 
     expect(res.status).toBe(200);
     expect(res.body).toEqual([
-      { countryCode: 'IN', headcount: 3, min: 1_000_000, max: 2_000_000, average: 1_366_667, median: 1_100_000 },
-      { countryCode: 'US', headcount: 4, min: 90_000, max: 400_000, average: 177_500, median: 110_000 },
+      {
+        countryCode: 'IN',
+        currencyCode: 'INR',
+        headcount: 3,
+        min: 1_000_000,
+        max: 2_000_000,
+        average: 1_366_667,
+        median: 1_100_000,
+      },
+      { countryCode: 'US', currencyCode: 'USD', headcount: 4, min: 90_000, max: 400_000, average: 177_500, median: 110_000 },
     ]);
   });
 
