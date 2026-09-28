@@ -16,6 +16,12 @@ export class AppError extends Error {
   }
 }
 
+export class ValidationError extends AppError {
+  constructor(details: FieldError[]) {
+    super(400, 'VALIDATION_ERROR', 'Request validation failed', details);
+  }
+}
+
 export class UnauthorizedError extends AppError {
   constructor(message = 'Authentication required') {
     super(401, 'UNAUTHORIZED', message);
@@ -31,6 +37,12 @@ export class InvalidCredentialsError extends AppError {
 export class NotFoundError extends AppError {
   constructor(message = 'Resource not found') {
     super(404, 'NOT_FOUND', message);
+  }
+}
+
+export class EmployeeNotFoundError extends NotFoundError {
+  constructor(id: number | string) {
+    super(`Employee ${id} not found`);
   }
 }
 
