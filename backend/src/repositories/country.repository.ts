@@ -6,4 +6,5 @@ export interface Country {
 
 export interface CountryRepository {
   findByCode(code: string): Promise<Country | null>;
+  findAll(): Promise<Country[]>;
 }

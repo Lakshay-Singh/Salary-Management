@@ -43,4 +43,6 @@ export interface EmployeeRepository {
   /** Resolves to false when no employee has this id. */
   delete(id: number): Promise<boolean>;
   getPeerStats(id: number): Promise<PeerStats>;
+  /** Each job title held by at least one employee (optionally in one country), once, in no particular order. */
+  getJobTitles(countryCode?: string): Promise<string[]>;
 }

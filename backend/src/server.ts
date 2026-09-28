@@ -20,8 +20,9 @@ const repositories: Repositories = {
     update: notBuiltYet,
     delete: notBuiltYet,
     getPeerStats: notBuiltYet,
+    getJobTitles: notBuiltYet,
   },
-  countries: { findByCode: notBuiltYet },
+  countries: { findByCode: notBuiltYet, findAll: notBuiltYet },
 };
 
 createApp({ config, repositories }).listen(config.port, (error?: Error) => {

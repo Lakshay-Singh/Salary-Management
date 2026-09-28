@@ -4,6 +4,7 @@ import helmet from 'helmet';
 import type { Config } from './config/config';
 import { createAuthController } from './controllers/auth.controller';
 import { createEmployeeController } from './controllers/employee.controller';
+import { createReferenceController } from './controllers/reference.controller';
 import { errorHandler } from './middleware/errorHandler';
 import { notFound } from './middleware/notFound';
 import { createLoginRateLimiter } from './middleware/rateLimiter';
@@ -13,8 +14,10 @@ import type { EmployeeRepository } from './repositories/employee.repository';
 import { authRouter } from './routes/auth.routes';
 import { employeeRouter } from './routes/employee.routes';
 import { healthRouter } from './routes/health.routes';
+import { referenceRouter } from './routes/reference.routes';
 import { createAuthService } from './services/auth.service';
 import { createEmployeeService } from './services/employee.service';
+import { createReferenceService } from './services/reference.service';
 
 export interface Repositories {
   employees: EmployeeRepository;
@@ -47,6 +50,7 @@ export function createApp({ config, repositories, logger = console }: AppDepende
 
   const authController = createAuthController(createAuthService(config));
   const employeeController = createEmployeeController(createEmployeeService(repositories));
+  const referenceController = createReferenceController(createReferenceService(repositories));
 
   // Public routes: no token needed
   app.use('/api', healthRouter);
@@ -55,6 +59,7 @@ export function createApp({ config, repositories, logger = console }: AppDepende
   // Protected by default: every /api route registered below this line requires a valid JWT.
   app.use('/api', requireAuth(config.jwtSecret));
   app.use('/api', employeeRouter(employeeController));
+  app.use('/api', referenceRouter(referenceController));
 
   app.use(notFound);
   app.use(errorHandler(logger));

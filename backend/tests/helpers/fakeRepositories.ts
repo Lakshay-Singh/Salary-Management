@@ -78,7 +78,7 @@ export class InMemoryEmployeeRepository implements EmployeeRepository {
     };
   }
 
-  async findJobTitles(countryCode?: string): Promise<string[]> {
+  async getJobTitles(countryCode?: string): Promise<string[]> {
     const titles = [...this.employees.values()]
       .filter((employee) => !countryCode || employee.countryCode === countryCode)
       .map((employee) => employee.jobTitle);
