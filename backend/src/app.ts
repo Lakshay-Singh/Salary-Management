@@ -2,6 +2,7 @@ import cors from 'cors';
 import express, { type Express } from 'express';
 import helmet from 'helmet';
 import type { Config } from './config/config';
+import { createAnalyticsController } from './controllers/analytics.controller';
 import { createAuthController } from './controllers/auth.controller';
 import { createEmployeeController } from './controllers/employee.controller';
 import { createReferenceController } from './controllers/reference.controller';
@@ -9,12 +10,15 @@ import { errorHandler } from './middleware/errorHandler';
 import { notFound } from './middleware/notFound';
 import { createLoginRateLimiter } from './middleware/rateLimiter';
 import { requireAuth } from './middleware/requireAuth';
+import type { AnalyticsRepository } from './repositories/analytics.repository';
 import type { CountryRepository } from './repositories/country.repository';
 import type { EmployeeRepository } from './repositories/employee.repository';
+import { analyticsRouter } from './routes/analytics.routes';
 import { authRouter } from './routes/auth.routes';
 import { employeeRouter } from './routes/employee.routes';
 import { healthRouter } from './routes/health.routes';
 import { referenceRouter } from './routes/reference.routes';
+import { createAnalyticsService } from './services/analytics.service';
 import { createAuthService } from './services/auth.service';
 import { createEmployeeService } from './services/employee.service';
 import { createReferenceService } from './services/reference.service';
@@ -22,6 +26,7 @@ import { createReferenceService } from './services/reference.service';
 export interface Repositories {
   employees: EmployeeRepository;
   countries: CountryRepository;
+  analytics: AnalyticsRepository;
 }
 
 export interface AppDependencies {
@@ -51,6 +56,7 @@ export function createApp({ config, repositories, logger = console }: AppDepende
   const authController = createAuthController(createAuthService(config));
   const employeeController = createEmployeeController(createEmployeeService(repositories));
   const referenceController = createReferenceController(createReferenceService(repositories));
+  const analyticsController = createAnalyticsController(createAnalyticsService(repositories));
 
   // Public routes: no token needed
   app.use('/api', healthRouter);
@@ -60,6 +66,7 @@ export function createApp({ config, repositories, logger = console }: AppDepende
   app.use('/api', requireAuth(config.jwtSecret));
   app.use('/api', employeeRouter(employeeController));
   app.use('/api', referenceRouter(referenceController));
+  app.use('/api', analyticsRouter(analyticsController));
 
   app.use(notFound);
   app.use(errorHandler(logger));

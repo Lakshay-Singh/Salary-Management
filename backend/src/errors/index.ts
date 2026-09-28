@@ -46,6 +46,12 @@ export class EmployeeNotFoundError extends NotFoundError {
   }
 }
 
+export class CountryNotFoundError extends NotFoundError {
+  constructor(code: string) {
+    super(`Country ${code} not found`);
+  }
+}
+
 export class TooManyRequestsError extends AppError {
   constructor(message = 'Too many requests, try again later') {
     super(429, 'TOO_MANY_REQUESTS', message);

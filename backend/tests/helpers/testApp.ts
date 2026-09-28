@@ -28,10 +28,18 @@ interface TestAppOptions {
   analytics?: AnalyticsRepository;
 }
 
+const noAnalyticsInThisTest = (): Promise<never> =>
+  Promise.reject(new Error('This test app has no analytics repository; pass one to buildTestApp'));
+
+const analyticsNotProvided: AnalyticsRepository = {
+  getCountryStats: noAnalyticsInThisTest,
+  getJobTitleStats: noAnalyticsInThisTest,
+};
+
 export function buildTestApp({
   employees = new InMemoryEmployeeRepository(),
   countries = new InMemoryCountryRepository(),
-  analytics,
+  analytics = analyticsNotProvided,
 }: TestAppOptions = {}) {
   return createApp({
     config: TEST_CONFIG,
