@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { MAX_DB_INTEGER } from '../domain/limits';
 import { EMPLOYEE_SORT_FIELDS } from '../repositories/employee.repository';
 
 const requiredText = z.string({ error: 'is required' }).trim().min(1, 'is required');
@@ -8,7 +9,11 @@ export const employeeSchema = z.object({
   fullName: requiredText,
   jobTitle: requiredText,
   countryCode: z.string({ error: 'is required' }),
-  salary: z.number({ error: 'must be a number' }).int('must be a whole number').positive('must be greater than 0'),
+  salary: z
+    .number({ error: 'must be a number' })
+    .int('must be a whole number')
+    .positive('must be greater than 0')
+    .max(MAX_DB_INTEGER, 'must be at most 2,147,483,647'),
 });
 
 export type EmployeeRequest = z.infer<typeof employeeSchema>;

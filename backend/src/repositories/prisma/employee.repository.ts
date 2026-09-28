@@ -1,4 +1,5 @@
 import { Prisma, type PrismaClient } from '@prisma/client';
+import { MAX_DB_INTEGER } from '../../domain/limits';
 import type {
   Employee,
   EmployeeInput,
@@ -56,11 +57,13 @@ export class PrismaEmployeeRepository implements EmployeeRepository {
     return this.prisma.employee.create({ data: input, select: EMPLOYEE_FIELDS });
   }
 
-  findById(id: number): Promise<Employee | null> {
+  async findById(id: number): Promise<Employee | null> {
+    if (!isStorableId(id)) return null;
     return this.prisma.employee.findUnique({ where: { id }, select: EMPLOYEE_FIELDS });
   }
 
   async update(id: number, input: EmployeeInput): Promise<Employee | null> {
+    if (!isStorableId(id)) return null;
     try {
       return await this.prisma.employee.update({ where: { id }, data: input, select: EMPLOYEE_FIELDS });
     } catch (error) {
@@ -70,6 +73,7 @@ export class PrismaEmployeeRepository implements EmployeeRepository {
   }
 
   async delete(id: number): Promise<boolean> {
+    if (!isStorableId(id)) return false;
     try {
       await this.prisma.employee.delete({ where: { id } });
       return true;
@@ -80,6 +84,7 @@ export class PrismaEmployeeRepository implements EmployeeRepository {
   }
 
   async getPeerStats(id: number): Promise<PeerStats> {
+    if (!isStorableId(id)) return { peerCount: 0, peerAverage: null };
     const employee = await this.prisma.employee.findUnique({
       where: { id },
       select: { countryCode: true, jobTitle: true },
@@ -102,6 +107,11 @@ export class PrismaEmployeeRepository implements EmployeeRepository {
     });
     return groups.map((group) => group.jobTitle);
   }
+}
+
+// A larger id cannot exist in an INTEGER column, and Prisma throws an unknown request error instead of finding nothing
+function isStorableId(id: number): boolean {
+  return id <= MAX_DB_INTEGER;
 }
 
 function isRecordNotFound(error: unknown): boolean {
