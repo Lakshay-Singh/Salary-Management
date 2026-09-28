@@ -44,12 +44,3 @@ model Employee {
   @@index([countryCode, jobTitle]) // analytics grouping, peer position, job titles within a country
   @@map("employees")
 }
-
-model AdminUser {
-  id           Int      @id @default(autoincrement())
-  email        String   @unique
-  passwordHash String   @map("password_hash")
-  createdAt    DateTime @default(now()) @map("created_at")
-
-  @@map("admin_users")
-}
