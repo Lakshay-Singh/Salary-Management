@@ -1,12 +1,26 @@
 import { EmployeeNotFoundError, ValidationError } from '../errors';
 import type { Country, CountryRepository } from '../repositories/country.repository';
-import type { Employee, EmployeeInput, EmployeeRepository } from '../repositories/employee.repository';
+import type {
+  Employee,
+  EmployeeInput,
+  EmployeeListQuery,
+  EmployeeRepository,
+} from '../repositories/employee.repository';
 
 export interface EmployeeWithCurrency extends Employee {
   currencyCode: string;
 }
 
+export interface EmployeePage {
+  data: EmployeeWithCurrency[];
+  page: number;
+  pageSize: number;
+  total: number;
+  totalPages: number;
+}
+
 export interface EmployeeService {
+  list(query: EmployeeListQuery): Promise<EmployeePage>;
   create(input: EmployeeInput): Promise<EmployeeWithCurrency>;
   getById(id: number): Promise<EmployeeWithCurrency>;
   update(id: number, input: EmployeeInput): Promise<EmployeeWithCurrency>;
@@ -27,6 +41,28 @@ export function createEmployeeService({ employees, countries }: EmployeeServiceD
     return country;
   }
 
+  // A stored employee's country always exists (the foreign key guarantees it), so a miss is a bug, not bad input
+  async function existingCountry(code: string): Promise<Country> {
+    const country = await countries.findByCode(code);
+    if (!country) {
+      throw new Error(`Country ${code} is referenced by an employee but does not exist`);
+    }
+    return country;
+  }
+
+  // One lookup per distinct country, however many employees on the page share it
+  function countryLookupOncePerCode(): (code: string) => Promise<Country> {
+    const lookups = new Map<string, Promise<Country>>();
+    return (code) => {
+      let lookup = lookups.get(code);
+      if (!lookup) {
+        lookup = existingCountry(code);
+        lookups.set(code, lookup);
+      }
+      return lookup;
+    };
+  }
+
   // Currency is never stored on the employee: it always comes from the employee's country
   const withCurrency = (employee: Employee, country: Country): EmployeeWithCurrency => ({
     ...employee,
@@ -34,6 +70,19 @@ export function createEmployeeService({ employees, countries }: EmployeeServiceD
   });
 
   return {
+    async list(query) {
+      const { data, total } = await employees.list(query);
+      const countryOf = countryLookupOncePerCode();
+
+      return {
+        data: await Promise.all(data.map(async (employee) => withCurrency(employee, await countryOf(employee.countryCode)))),
+        page: query.page,
+        pageSize: query.pageSize,
+        total,
+        totalPages: Math.ceil(total / query.pageSize),
+      };
+    },
+
     async create(input) {
       const country = await knownCountry(input.countryCode);
       return withCurrency(await employees.create(input), country);
@@ -42,12 +91,7 @@ export function createEmployeeService({ employees, countries }: EmployeeServiceD
     async getById(id) {
       const employee = await employees.findById(id);
       if (!employee) throw new EmployeeNotFoundError(id);
-
-      const country = await countries.findByCode(employee.countryCode);
-      if (!country) {
-        throw new Error(`Employee ${id} references country ${employee.countryCode}, which does not exist`);
-      }
-      return withCurrency(employee, country);
+      return withCurrency(employee, await existingCountry(employee.countryCode));
     },
 
     async update(id, input) {

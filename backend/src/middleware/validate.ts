@@ -8,3 +8,11 @@ export function validateBody(schema: ZodType): RequestHandler {
     next();
   };
 }
+
+/** Puts the parsed query in res.locals.query: Express 5 makes req.query read-only, so it can't be replaced. */
+export function validateQuery(schema: ZodType): RequestHandler {
+  return (req, res, next) => {
+    res.locals.query = schema.parse(req.query);
+    next();
+  };
+}

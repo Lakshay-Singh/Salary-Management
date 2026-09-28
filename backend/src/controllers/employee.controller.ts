@@ -1,10 +1,11 @@
 import type { RequestHandler } from 'express';
 import { EmployeeNotFoundError } from '../errors';
-import type { EmployeeService, EmployeeWithCurrency } from '../services/employee.service';
-import type { EmployeeRequest } from '../validation/employee.schemas';
+import type { EmployeePage, EmployeeService, EmployeeWithCurrency } from '../services/employee.service';
+import type { EmployeeListParams, EmployeeRequest } from '../validation/employee.schemas';
 
 type IdParams = { id: string };
 type NoParams = Record<string, string>;
+type ValidatedQuery<Query> = { query: Query };
 
 // An id that can't exist, such as "abc", is simply an employee we don't have
 function parseEmployeeId(raw: string): number {
@@ -16,6 +17,13 @@ function parseEmployeeId(raw: string): number {
 }
 
 export function createEmployeeController(service: EmployeeService) {
+  const list: RequestHandler<NoParams, EmployeePage, unknown, unknown, ValidatedQuery<EmployeeListParams>> = async (
+    _req,
+    res,
+  ) => {
+    res.status(200).json(await service.list(res.locals.query));
+  };
+
   const create: RequestHandler<NoParams, EmployeeWithCurrency, EmployeeRequest> = async (req, res) => {
     res.status(201).json(await service.create(req.body));
   };
@@ -33,7 +41,7 @@ export function createEmployeeController(service: EmployeeService) {
     res.status(204).end();
   };
 
-  return { create, getById, update, remove };
+  return { list, create, getById, update, remove };
 }
 
 export type EmployeeController = ReturnType<typeof createEmployeeController>;
