@@ -2,6 +2,9 @@ import type { EmployeeInput, EmployeeRepository } from '../../src/repositories/e
 
 const ASHA: EmployeeInput = { fullName: 'Asha Rao', jobTitle: 'Software Engineer', countryCode: 'IN', salary: 1_800_000 };
 
+// Larger than Postgres INTEGER (max 2,147,483,647), which is how ids are stored
+const BEYOND_INTEGER_RANGE = 3_000_000_000;
+
 /**
  * Behaviour every EmployeeRepository must have, whatever stores the data.
  * `setUp` runs before each test and must return an empty repository in which countries IN and US exist.
@@ -44,6 +47,10 @@ export function describeEmployeeRepositoryContract(name: string, setUp: () => Pr
       it('returns null for an id that does not exist', async () => {
         expect(await repository.findById(999_999)).toBeNull();
       });
+
+      it('returns null for an id beyond the 32-bit integer range', async () => {
+        expect(await repository.findById(BEYOND_INTEGER_RANGE)).toBeNull();
+      });
     });
 
     describe('update', () => {
@@ -60,6 +67,10 @@ export function describeEmployeeRepositoryContract(name: string, setUp: () => Pr
       it('returns null for an id that does not exist', async () => {
         expect(await repository.update(999_999, ASHA)).toBeNull();
       });
+
+      it('returns null for an id beyond the 32-bit integer range', async () => {
+        expect(await repository.update(BEYOND_INTEGER_RANGE, ASHA)).toBeNull();
+      });
     });
 
     describe('delete', () => {
@@ -72,6 +83,10 @@ export function describeEmployeeRepositoryContract(name: string, setUp: () => Pr
 
       it('returns false for an id that does not exist', async () => {
         expect(await repository.delete(999_999)).toBe(false);
+      });
+
+      it('returns false for an id beyond the 32-bit integer range', async () => {
+        expect(await repository.delete(BEYOND_INTEGER_RANGE)).toBe(false);
       });
     });
 

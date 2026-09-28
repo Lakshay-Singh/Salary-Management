@@ -22,6 +22,7 @@ const invalidEmployees: [string, object, string][] = [
   ['a fractional salary', { ...validEmployee, salary: 1_800_000.5 }, 'salary'],
   ['a negative salary', { ...validEmployee, salary: -1 }, 'salary'],
   ['a zero salary', { ...validEmployee, salary: 0 }, 'salary'],
+  ['a salary above 2,147,483,647, the database INTEGER limit', { ...validEmployee, salary: 2_147_483_648 }, 'salary'],
 ];
 
 const employeeNotFound = (id: number | string) => ({
@@ -89,6 +90,13 @@ describe('Employee CRUD', () => {
 
       expect(res.status).toBe(201);
       expect(res.body).toMatchObject({ fullName: 'Asha Rao', jobTitle: 'Software Engineer' });
+    });
+
+    it('accepts a salary of exactly 2,147,483,647, the largest the database can store', async () => {
+      const res = await createEmployee({ ...validEmployee, salary: 2_147_483_647 });
+
+      expect(res.status).toBe(201);
+      expect(res.body.salary).toBe(2_147_483_647);
     });
 
     it.each(invalidEmployees)('rejects %s with 400', async (_case, body, field) => {
