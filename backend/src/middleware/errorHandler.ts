@@ -1,6 +1,6 @@
 import type { ErrorRequestHandler } from 'express';
 import { ZodError } from 'zod';
-import { AppError, type FieldError } from '../errors';
+import { AppError, ValidationError, type FieldError } from '../errors';
 
 type Logger = Pick<Console, 'error'>;
 
@@ -24,13 +24,11 @@ export function errorHandler(logger: Logger = console): ErrorRequestHandler {
   };
 }
 
-function toErrorResponse(err: unknown): { status: number; body: ErrorBody } {
+function toErrorResponse(thrown: unknown): { status: number; body: ErrorBody } {
+  const err = thrown instanceof ZodError ? toValidationError(thrown) : thrown;
+
   if (err instanceof AppError) {
     return respond(err.statusCode, err.code, err.message, err.details);
-  }
-  if (err instanceof ZodError) {
-    const details = err.issues.map((issue) => ({ field: issue.path.map(String).join('.'), message: issue.message }));
-    return respond(400, 'VALIDATION_ERROR', 'Request validation failed', details);
   }
   if (isBodyParserError(err, 'entity.parse.failed')) {
     return respond(400, 'INVALID_JSON', 'Request body is not valid JSON');
@@ -39,6 +37,12 @@ function toErrorResponse(err: unknown): { status: number; body: ErrorBody } {
     return respond(413, 'PAYLOAD_TOO_LARGE', 'Request body is too large');
   }
   return respond(500, 'INTERNAL_ERROR', 'Something went wrong');
+}
+
+function toValidationError(err: ZodError): ValidationError {
+  return new ValidationError(
+    err.issues.map((issue) => ({ field: issue.path.map(String).join('.'), message: issue.message })),
+  );
 }
 
 function respond(status: number, code: string, message: string, details?: FieldError[]) {
