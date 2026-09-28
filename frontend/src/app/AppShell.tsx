@@ -1,4 +1,4 @@
-import { ChartColumn, LogOut, Users } from 'lucide-react'
+import { Banknote, ChartColumn, LogOut, Users } from 'lucide-react'
 import { NavLink, Outlet, useNavigate } from 'react-router'
 import { Button } from '@/components/ui/button'
 import { tokenStorage } from '@/features/auth/tokenStorage'
@@ -18,10 +18,15 @@ export function AppShell() {
   }
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <header className="border-b">
+    <div className="min-h-screen">
+      <header className="border-b bg-card">
         <div className="mx-auto flex h-14 max-w-6xl items-center gap-6 px-4">
-          <span className="font-semibold">Salary Management</span>
+          <span className="flex items-center gap-2.5 font-semibold">
+            <span className="flex size-7 items-center justify-center rounded-md bg-primary text-primary-foreground">
+              <Banknote className="size-4" aria-hidden />
+            </span>
+            Salary Management
+          </span>
           <nav className="flex items-center gap-1">
             {NAV_ITEMS.map(({ to, label, icon: Icon }) => (
               <NavLink
@@ -29,7 +34,7 @@ export function AppShell() {
                 to={to}
                 className={({ isActive }) =>
                   cn(
-                    'flex items-center gap-2 rounded-md px-3 py-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground',
+                    'flex items-center gap-2 rounded-md px-3 py-1.5 text-sm font-medium text-muted-foreground transition-colors duration-150 hover:bg-muted/60 hover:text-foreground',
                     isActive && 'bg-muted text-foreground',
                   )
                 }

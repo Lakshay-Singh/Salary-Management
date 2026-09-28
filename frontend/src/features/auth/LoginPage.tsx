@@ -3,7 +3,7 @@ import { Banknote, CircleAlert, LoaderCircle } from 'lucide-react'
 import { type FormEvent, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardDescription, CardHeader } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { ApiError } from '@/lib/api'
@@ -35,25 +35,25 @@ export function LoginPage() {
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-muted/40 p-4">
-      <div className="w-full max-w-sm space-y-6">
-        <div className="flex flex-col items-center gap-3 text-center">
-          <div className="flex size-11 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-sm">
+    <main className="flex min-h-screen items-center justify-center px-4 py-12">
+      <div className="w-full max-w-sm space-y-8">
+        <div className="flex flex-col items-center gap-4 text-center">
+          <div className="flex size-10 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-card">
             <Banknote className="size-5" aria-hidden />
           </div>
           <div className="space-y-1">
-            <h1 className="text-xl font-semibold tracking-tight">Salary Management</h1>
+            <h1>Salary Management</h1>
             <p className="text-sm text-muted-foreground">Pay data for every ACME employee, in one place</p>
           </div>
         </div>
 
-        <Card className="shadow-sm">
+        <Card className="shadow-raised [--card-spacing:--spacing(6)]">
           <CardHeader>
-            <CardTitle>Sign in</CardTitle>
+            <h2>Sign in</h2>
             <CardDescription>Use your HR Manager account.</CardDescription>
           </CardHeader>
           <CardContent>
-            <form className="space-y-4" onSubmit={handleSubmit}>
+            <form className="space-y-5" onSubmit={handleSubmit}>
               <div className="space-y-2">
                 <Label htmlFor="username">Username</Label>
                 <Input
@@ -82,14 +82,14 @@ export function LoginPage() {
               {signIn.error && (
                 <p
                   role="alert"
-                  className="flex items-start gap-2 rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive"
+                  className="flex items-start gap-2 rounded-lg border border-destructive/25 bg-destructive/5 px-3 py-2.5 text-sm text-destructive"
                 >
                   <CircleAlert className="mt-0.5 size-4 shrink-0" aria-hidden />
                   {describeError(signIn.error)}
                 </p>
               )}
 
-              <Button type="submit" size="lg" className="w-full" disabled={signIn.isPending}>
+              <Button type="submit" size="lg" className="h-10 w-full" disabled={signIn.isPending}>
                 {signIn.isPending ? (
                   <>
                     <LoaderCircle className="animate-spin" aria-hidden />
