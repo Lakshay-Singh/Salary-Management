@@ -1,8 +1,8 @@
 import type { Express } from 'express';
 import request from 'supertest';
-import { bearerFor } from '../helpers/auth';
-import { InMemoryCountryRepository, InMemoryEmployeeRepository, TEST_COUNTRIES } from '../helpers/fakeRepositories';
-import { buildTestApp } from '../helpers/testApp';
+import { bearerFor } from '../../helpers/auth';
+import { InMemoryCountryRepository, InMemoryEmployeeRepository, TEST_COUNTRIES } from '../../helpers/fakeRepositories';
+import { buildTestApp } from '../../helpers/testApp';
 
 const AUTHORIZATION = bearerFor();
 

@@ -1,9 +1,9 @@
 import type { Express } from 'express';
 import request from 'supertest';
-import { verifyToken } from '../../src/lib/jwt';
-import { TEST_JWT_SECRET, TEST_PASSWORD, TEST_USERNAME } from '../helpers/auth';
-import { invalidFields } from '../helpers/errors';
-import { buildTestApp } from '../helpers/testApp';
+import { verifyToken } from '../../../src/lib/jwt';
+import { TEST_JWT_SECRET, TEST_PASSWORD, TEST_USERNAME } from '../../helpers/auth';
+import { invalidFields } from '../../helpers/errors';
+import { buildTestApp } from '../../helpers/testApp';
 
 // Wrong username and wrong password get exactly this response, so the API never reveals which usernames exist
 const INVALID_CREDENTIALS = {

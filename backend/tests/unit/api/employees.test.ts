@@ -1,9 +1,9 @@
 import type { Express } from 'express';
 import request from 'supertest';
-import { bearerFor } from '../helpers/auth';
-import { invalidFields } from '../helpers/errors';
-import { InMemoryEmployeeRepository } from '../helpers/fakeRepositories';
-import { buildTestApp } from '../helpers/testApp';
+import { bearerFor } from '../../helpers/auth';
+import { invalidFields } from '../../helpers/errors';
+import { InMemoryEmployeeRepository } from '../../helpers/fakeRepositories';
+import { buildTestApp } from '../../helpers/testApp';
 
 const AUTHORIZATION = bearerFor();
 
