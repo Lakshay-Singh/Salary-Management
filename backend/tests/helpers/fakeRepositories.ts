@@ -19,6 +19,10 @@ export class InMemoryCountryRepository implements CountryRepository {
   async findByCode(code: string): Promise<Country | null> {
     return this.countries.find((country) => country.code === code) ?? null;
   }
+
+  async findAll(): Promise<Country[]> {
+    return this.countries.map((country) => ({ ...country }));
+  }
 }
 
 export class InMemoryEmployeeRepository implements EmployeeRepository {
@@ -72,6 +76,13 @@ export class InMemoryEmployeeRepository implements EmployeeRepository {
       data: matching.slice(start, start + pageSize).map((employee) => ({ ...employee })),
       total: matching.length,
     };
+  }
+
+  async findJobTitles(countryCode?: string): Promise<string[]> {
+    const titles = [...this.employees.values()]
+      .filter((employee) => !countryCode || employee.countryCode === countryCode)
+      .map((employee) => employee.jobTitle);
+    return [...new Set(titles)];
   }
 
   async getPeerStats(id: number): Promise<PeerStats> {
