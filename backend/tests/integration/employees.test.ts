@@ -161,4 +161,129 @@ describe('Employee CRUD', () => {
       expect(res.body).toEqual(employeeNotFound(999));
     });
   });
+
+  describe('GET /api/employees', () => {
+    const listEmployees = (query: Record<string, string | number> = {}) =>
+      request(app).get('/api/employees').query(query).set('Authorization', AUTHORIZATION);
+
+    const givenEmployees = async (...overrides: Partial<typeof validEmployee>[]) => {
+      for (const override of overrides) {
+        await employees.create({ ...validEmployee, ...override });
+      }
+    };
+
+    const numbered = (count: number) =>
+      Array.from({ length: count }, (_, index) => ({ fullName: `Employee ${String(index + 1).padStart(2, '0')}` }));
+
+    const namesIn = (body: { data: { fullName: string }[] }) => body.data.map((employee) => employee.fullName);
+
+    it('returns 401 without a token', async () => {
+      const res = await request(app).get('/api/employees');
+
+      expect(res.status).toBe(401);
+      expect(res.body.error.code).toBe('UNAUTHORIZED');
+    });
+
+    it('returns the first 25 employees, each with its currency, and the paging totals by default', async () => {
+      await givenEmployees(...numbered(30));
+
+      const res = await listEmployees();
+
+      expect(res.status).toBe(200);
+      expect(res.body).toEqual({
+        data: numbered(25).map((override, index) => ({
+          id: index + 1,
+          ...validEmployee,
+          ...override,
+          currencyCode: 'INR',
+        })),
+        page: 1,
+        pageSize: 25,
+        total: 30,
+        totalPages: 2,
+      });
+    });
+
+    it('returns the requested page', async () => {
+      await givenEmployees(...numbered(25));
+
+      const res = await listEmployees({ page: 2, pageSize: 10 });
+
+      expect(res.status).toBe(200);
+      expect(namesIn(res.body)).toEqual(namesIn({ data: numbered(25).slice(10, 20) }));
+      expect(res.body).toMatchObject({ page: 2, pageSize: 10, total: 25, totalPages: 3 });
+    });
+
+    it('filters by country code, and counts only the matches in the total', async () => {
+      await givenEmployees(
+        { fullName: 'Asha Rao', countryCode: 'IN' },
+        { fullName: 'John Smith', countryCode: 'US' },
+        { fullName: 'Priya Nair', countryCode: 'IN' },
+        { fullName: 'Emily Chen', countryCode: 'US' },
+      );
+
+      const res = await listEmployees({ countryCode: 'US' });
+
+      expect(res.status).toBe(200);
+      expect(namesIn(res.body).sort()).toEqual(['Emily Chen', 'John Smith']);
+      expect(res.body.total).toBe(2);
+    });
+
+    it('filters by exact job title, so "Software Engineer" does not match "Senior Software Engineer"', async () => {
+      await givenEmployees(
+        { fullName: 'Asha Rao', jobTitle: 'Software Engineer' },
+        { fullName: 'Dev Patel', jobTitle: 'Senior Software Engineer' },
+        { fullName: 'Priya Nair', jobTitle: 'Software Engineer' },
+      );
+
+      const res = await listEmployees({ jobTitle: 'Software Engineer' });
+
+      expect(res.status).toBe(200);
+      expect(namesIn(res.body).sort()).toEqual(['Asha Rao', 'Priya Nair']);
+      expect(res.body.total).toBe(2);
+    });
+
+    it('searches names by case-insensitive partial match', async () => {
+      await givenEmployees({ fullName: 'Asha Rao' }, { fullName: 'Rahul Sharma' }, { fullName: 'Maria Garcia' });
+
+      const res = await listEmployees({ search: 'SHA' });
+
+      expect(res.status).toBe(200);
+      expect(namesIn(res.body).sort()).toEqual(['Asha Rao', 'Rahul Sharma']);
+      expect(res.body.total).toBe(2);
+    });
+
+    it.each([
+      ['asc', ['Low Earner', 'Mid Earner', 'High Earner']],
+      ['desc', ['High Earner', 'Mid Earner', 'Low Earner']],
+    ])('sorts by salary %s', async (sortOrder, expectedNames) => {
+      await givenEmployees(
+        { fullName: 'Mid Earner', salary: 2_000_000 },
+        { fullName: 'High Earner', salary: 3_000_000 },
+        { fullName: 'Low Earner', salary: 1_000_000 },
+      );
+
+      const res = await listEmployees({ sortBy: 'salary', sortOrder });
+
+      expect(res.status).toBe(200);
+      expect(namesIn(res.body)).toEqual(expectedNames);
+    });
+
+    it('rejects a sortBy outside the allowed columns with 400', async () => {
+      const res = await listEmployees({ sortBy: 'passwordHash' });
+
+      expect(res.status).toBe(400);
+      expect(res.body.error.code).toBe('VALIDATION_ERROR');
+      expect(invalidFields(res.body)).toEqual(['sortBy']);
+    });
+
+    it('returns an empty page, not a 404, when nothing matches', async () => {
+      await givenEmployees({ fullName: 'Asha Rao', countryCode: 'IN' });
+
+      const res = await listEmployees({ countryCode: 'US' });
+
+      expect(res.status).toBe(200);
+      expect(res.body).toEqual({ data: [], page: 1, pageSize: 25, total: 0, totalPages: 0 });
+    });
+  });
 });
