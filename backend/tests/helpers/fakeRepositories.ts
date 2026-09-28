@@ -5,6 +5,7 @@ import type {
   EmployeeListQuery,
   EmployeeListResult,
   EmployeeRepository,
+  PeerStats,
 } from '../../src/repositories/employee.repository';
 
 export const TEST_COUNTRIES: Country[] = [
@@ -70,6 +71,22 @@ export class InMemoryEmployeeRepository implements EmployeeRepository {
     return {
       data: matching.slice(start, start + pageSize).map((employee) => ({ ...employee })),
       total: matching.length,
+    };
+  }
+
+  async getPeerStats(id: number): Promise<PeerStats> {
+    const employee = this.employees.get(id);
+    const peers = [...this.employees.values()].filter(
+      (other) =>
+        employee !== undefined &&
+        other.id !== employee.id &&
+        other.countryCode === employee.countryCode &&
+        other.jobTitle === employee.jobTitle,
+    );
+
+    return {
+      peerCount: peers.length,
+      peerAverage: peers.length > 0 ? peers.reduce((sum, peer) => sum + peer.salary, 0) / peers.length : null,
     };
   }
 }

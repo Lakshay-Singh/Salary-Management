@@ -39,6 +39,12 @@ describe('Employee CRUD', () => {
 
   const givenEmployee = () => employees.create(validEmployee);
 
+  const givenEmployees = async (...overrides: Partial<typeof validEmployee>[]) => {
+    for (const override of overrides) {
+      await employees.create({ ...validEmployee, ...override });
+    }
+  };
+
   const createEmployee = (body: object) =>
     request(app).post('/api/employees').set('Authorization', AUTHORIZATION).send(body);
   const getEmployee = (id: number | string) =>
@@ -166,12 +172,6 @@ describe('Employee CRUD', () => {
     const listEmployees = (query: Record<string, string | number> = {}) =>
       request(app).get('/api/employees').query(query).set('Authorization', AUTHORIZATION);
 
-    const givenEmployees = async (...overrides: Partial<typeof validEmployee>[]) => {
-      for (const override of overrides) {
-        await employees.create({ ...validEmployee, ...override });
-      }
-    };
-
     const numbered = (count: number) =>
       Array.from({ length: count }, (_, index) => ({ fullName: `Employee ${String(index + 1).padStart(2, '0')}` }));
 
@@ -284,6 +284,77 @@ describe('Employee CRUD', () => {
 
       expect(res.status).toBe(200);
       expect(res.body).toEqual({ data: [], page: 1, pageSize: 25, total: 0, totalPages: 0 });
+    });
+  });
+
+  describe('GET /api/employees/:id/peer-position', () => {
+    const getPeerPosition = (id: number | string) =>
+      request(app).get(`/api/employees/${id}/peer-position`).set('Authorization', AUTHORIZATION);
+
+    const sameTitleInAnotherCountry = { countryCode: 'US', jobTitle: validEmployee.jobTitle };
+    const anotherTitleInSameCountry = { countryCode: validEmployee.countryCode, jobTitle: 'Engineering Manager' };
+
+    it('returns 401 without a token', async () => {
+      const res = await request(app).get('/api/employees/1/peer-position');
+
+      expect(res.status).toBe(401);
+      expect(res.body.error.code).toBe('UNAUTHORIZED');
+    });
+
+    it('compares the salary with peers in the same country and job title, excluding the employee', async () => {
+      const employee = await employees.create({ ...validEmployee, salary: 1_200_000 });
+      await givenEmployees(
+        { salary: 900_000 },
+        { salary: 1_000_000 },
+        { salary: 1_100_000 },
+        { ...sameTitleInAnotherCountry, salary: 200_000 },
+        { ...anotherTitleInSameCountry, salary: 5_000_000 },
+      );
+
+      const res = await getPeerPosition(employee.id);
+
+      expect(res.status).toBe(200);
+      expect(res.body).toEqual({ peerCount: 3, peerAverage: 1_000_000, percentageDiff: 20, label: 'Above average' });
+    });
+
+    it('reports a salary below the peer average as a negative difference', async () => {
+      const employee = await employees.create({ ...validEmployee, salary: 850_000 });
+      await givenEmployees({ salary: 900_000 }, { salary: 1_000_000 }, { salary: 1_100_000 });
+
+      const res = await getPeerPosition(employee.id);
+
+      expect(res.status).toBe(200);
+      expect(res.body).toEqual({ peerCount: 3, peerAverage: 1_000_000, percentageDiff: -15, label: 'Below average' });
+    });
+
+    it('rounds the peer average to whole currency units and the difference to one decimal place', async () => {
+      const employee = await employees.create({ ...validEmployee, salary: 1_200_000 });
+      await givenEmployees({ salary: 950_000 }, { salary: 1_000_000 }, { salary: 1_060_000 });
+
+      const res = await getPeerPosition(employee.id);
+
+      expect(res.status).toBe(200);
+      expect(res.body).toEqual({ peerCount: 3, peerAverage: 1_003_333, percentageDiff: 19.6, label: 'Above average' });
+    });
+
+    it.each([0, 2])(
+      'returns "Not enough peers" with no average or difference when there are %i peers',
+      async (peerCount) => {
+        const employee = await employees.create({ ...validEmployee, salary: 1_200_000 });
+        await givenEmployees(...Array.from({ length: peerCount }, () => ({ salary: 1_000_000 })));
+
+        const res = await getPeerPosition(employee.id);
+
+        expect(res.status).toBe(200);
+        expect(res.body).toEqual({ peerCount, peerAverage: null, percentageDiff: null, label: 'Not enough peers' });
+      },
+    );
+
+    it.each(['999', 'abc'])('returns 404 for the unknown employee id %p', async (id) => {
+      const res = await getPeerPosition(id);
+
+      expect(res.status).toBe(404);
+      expect(res.body).toEqual(employeeNotFound(id));
     });
   });
 });
