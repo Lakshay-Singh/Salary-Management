@@ -77,4 +77,16 @@ describe('percentageDifference', () => {
   it('compares against the exact fractional average', () => {
     expect(percentageDifference(1_200_000, averageOf(950_000, 1_000_000, 1_060_000))).toBe(19.6);
   });
+
+  it('rounds a negative half away from zero, the same as a positive one: 87,750 against 100,000 is -12.3', () => {
+    expect(percentageDifference(87_750, PEER_AVERAGE)).toBe(-12.3);
+  });
+
+  it('rounds -0.05 away from zero to -0.1, not to -0', () => {
+    expect(percentageDifference(99_950, PEER_AVERAGE)).toBe(-0.1);
+  });
+
+  it('returns positive zero, never -0, for a difference that rounds to nothing', () => {
+    expect(percentageDifference(99_960, PEER_AVERAGE)).toBe(0);
+  });
 });
