@@ -1,4 +1,4 @@
-import { peerLabel, type PeerLabel } from '../domain/peerPosition';
+import { peerLabel, percentageDifference, type PeerLabel } from '../domain/peerPosition';
 import { EmployeeNotFoundError, ValidationError } from '../errors';
 import type { Country, CountryRepository } from '../repositories/country.repository';
 import type {
@@ -103,12 +103,11 @@ export function createEmployeeService({ employees, countries }: EmployeeServiceD
         return { peerCount, peerAverage: null, percentageDiff: null, label: 'Not enough peers' };
       }
 
-      // The label uses the exact average; only the numbers shown to the user are rounded
-      const percentageDiff = ((employee.salary - peerAverage) / peerAverage) * 100;
+      // The label and the difference use the exact average; only the average shown to the user is rounded
       return {
         peerCount,
         peerAverage: Math.round(peerAverage),
-        percentageDiff: Math.round(percentageDiff * 10) / 10,
+        percentageDiff: percentageDifference(employee.salary, peerAverage),
         label,
       };
     },

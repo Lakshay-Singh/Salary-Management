@@ -11,3 +11,9 @@ export function peerLabel(salary: number, peerAvg: number, peerCount: number): P
   if (salary < peerAvg * LOWER_BOUND_RATIO) return 'Below average';
   return 'At average';
 }
+
+/** How far a salary is from the peer average, as a signed percentage rounded to one decimal place (e.g. 19.6, -15). */
+export function percentageDifference(salary: number, peerAvg: number): number {
+  const percent = ((salary - peerAvg) / peerAvg) * 100;
+  return Math.round(percent * 10) / 10;
+}

@@ -1,4 +1,4 @@
-import { peerLabel } from '../../../src/domain/peerPosition';
+import { peerLabel, percentageDifference } from '../../../src/domain/peerPosition';
 
 const PEER_AVERAGE = 100_000;
 
@@ -49,5 +49,32 @@ describe('peerLabel', () => {
     it('compares against the exact average: 105,000 is more than 5% above an average of 99,999.67', () => {
       expect(peerLabel(105_000, averageOf(99_999, 100_000, 100_000), 3)).toBe('Above average');
     });
+  });
+});
+
+describe('percentageDifference', () => {
+  it('is 0 when the salary equals the peer average', () => {
+    expect(percentageDifference(100_000, PEER_AVERAGE)).toBe(0);
+  });
+
+  it('is positive for a salary above the peer average', () => {
+    expect(percentageDifference(120_000, PEER_AVERAGE)).toBe(20);
+  });
+
+  it('is negative for a salary below the peer average', () => {
+    expect(percentageDifference(85_000, PEER_AVERAGE)).toBe(-15);
+  });
+
+  it.each([
+    [112_340, 12.3],
+    [112_360, 12.4],
+    [87_660, -12.3],
+    [87_640, -12.4],
+  ])('rounds to one decimal place: %i against 100,000 is %p', (salary, expected) => {
+    expect(percentageDifference(salary, PEER_AVERAGE)).toBe(expected);
+  });
+
+  it('compares against the exact fractional average', () => {
+    expect(percentageDifference(1_200_000, averageOf(950_000, 1_000_000, 1_060_000))).toBe(19.6);
   });
 });
