@@ -2,13 +2,17 @@ import cors from 'cors';
 import express, { type Express } from 'express';
 import helmet from 'helmet';
 import type { Config } from './config/config';
+import { createAuthController } from './controllers/auth.controller';
 import { errorHandler } from './middleware/errorHandler';
 import { notFound } from './middleware/notFound';
+import { createLoginRateLimiter } from './middleware/rateLimiter';
 import { requireAuth } from './middleware/requireAuth';
+import { authRouter } from './routes/auth.routes';
 import { healthRouter } from './routes/health.routes';
+import { createAuthService } from './services/auth.service';
 
 export interface AppDependencies {
-  config: Pick<Config, 'allowedOrigin' | 'jwtSecret'>;
+  config: Pick<Config, 'allowedOrigin' | 'jwtSecret' | 'hrUsername' | 'hrPasswordHash'>;
   logger?: Pick<Console, 'error'>;
 }
 
@@ -30,8 +34,11 @@ export function createApp({ config, logger = console }: AppDependencies): Expres
   );
   app.use(express.json({ limit: '10kb' }));
 
-  // Public routes. Login joins health here.
+  const authController = createAuthController(createAuthService(config));
+
+  // Public routes: no token needed
   app.use('/api', healthRouter);
+  app.use('/api', authRouter(authController, createLoginRateLimiter()));
 
   // Protected by default: every /api route registered below this line requires a valid JWT.
   app.use('/api', requireAuth(config.jwtSecret));

@@ -22,8 +22,20 @@ export class UnauthorizedError extends AppError {
   }
 }
 
+export class InvalidCredentialsError extends AppError {
+  constructor() {
+    super(401, 'INVALID_CREDENTIALS', 'Invalid username or password');
+  }
+}
+
 export class NotFoundError extends AppError {
   constructor(message = 'Resource not found') {
     super(404, 'NOT_FOUND', message);
+  }
+}
+
+export class TooManyRequestsError extends AppError {
+  constructor(message = 'Too many requests, try again later') {
+    super(429, 'TOO_MANY_REQUESTS', message);
   }
 }
