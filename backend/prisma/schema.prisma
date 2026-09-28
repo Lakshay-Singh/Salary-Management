@@ -1,0 +1,55 @@
+// Salary Management: database schema (PostgreSQL on Neon).
+// Tables and columns are snake_case in the database (@@map / @map), so raw SQL,
+// such as the median query, needs no quoted identifiers.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL") // Neon pooled connection, used at runtime
+  directUrl = env("DIRECT_URL") // Neon direct connection, used by migrations
+}
+
+// Reference data: the fixed list of supported countries.
+// An employee is paid in their country's currency, so currency lives here, not on Employee.
+
+model Country {
+  code           String     @id @db.VarChar(2) // ISO 3166-1 alpha-2, e.g. "IN", "US"
+  name           String
+  currencyCode   String     @map("currency_code") @db.VarChar(3) // ISO 4217, e.g. "INR", "USD"
+  currencySymbol String     @map("currency_symbol")
+  employees      Employee[]
+
+  @@map("countries")
+}
+
+model Employee {
+  id          Int      @id @default(autoincrement())
+  fullName    String   @map("full_name")
+  jobTitle    String   @map("job_title")
+  countryCode String   @map("country_code") @db.VarChar(2)
+  country     Country  @relation(fields: [countryCode], references: [code], onDelete: Restrict)
+  // Annual gross base salary in whole units of the country's currency.
+  // Int, never Float or Decimal: exact and rounding-free. Postgres int caps at ~2.1 billion units.
+  // salary can move to SalaryRecord(employeeId, amount, effectiveDate) without breaking the Employee model
+  salary      Int
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@index([fullName]) // sort by name; partial search (ILIKE '%term%') can't use a B-tree and scans 10k rows in ms
+  @@index([countryCode]) // country filter
+  @@index([jobTitle]) // job title filter, job titles across all countries
+  @@index([countryCode, jobTitle]) // analytics grouping, peer position, job titles within a country
+  @@map("employees")
+}
+
+model AdminUser {
+  id           Int      @id @default(autoincrement())
+  email        String   @unique
+  passwordHash String   @map("password_hash")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  @@map("admin_users")
+}
