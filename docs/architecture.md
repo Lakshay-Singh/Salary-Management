@@ -1,4 +1,4 @@
-﻿# Salary Management â€” Architecture (v1)
+# Salary Management — Architecture (v1)
 
 Companion to [requirements.md](requirements.md). That document says *what* we build and *why*; this one says *how*.
 
@@ -56,7 +56,7 @@ The browser loads the app from Vercel, then calls the API on Railway directly (c
                                                    +---------------------+
 ```
 
-**Request pipeline inside the API:** `helmet â†’ cors â†’ JSON parser â†’ public router (health, login) â†’ requireAuth â†’ protected routers â†’ 404 handler â†’ error handler`
+**Request pipeline inside the API:** `helmet → cors → JSON parser → public router (health, login) → requireAuth → protected routers → 404 handler → error handler`
 
 **Configuration:**
 
@@ -78,11 +78,11 @@ The browser loads the app from Vercel, then calls the API on Railway directly (c
 
 ```
 Salary-Management/
-â”œâ”€â”€ backend/             Express API, deployed to Railway
-â”œâ”€â”€ frontend/            React SPA, deployed to Vercel
-â”œâ”€â”€ docs/                Requirements, architecture, decision notes, AI prompts
-â”œâ”€â”€ docker-compose.yml   Local PostgreSQL for development and integration tests
-â””â”€â”€ .github/workflows/   CI: typecheck, lint and test both apps on every push
+├── backend/             Express API, deployed to Railway
+├── frontend/            React SPA, deployed to Vercel
+├── docs/                Requirements, architecture, decision notes, AI prompts
+├── docker-compose.yml   Local PostgreSQL for development and integration tests
+└── .github/workflows/   CI: typecheck, lint and test both apps on every push
 ```
 
 `backend/` and `frontend/` are separate npm projects with no shared package, so each deploys from its own folder. Tests on both sides keep the API contract honest.
@@ -91,50 +91,50 @@ Salary-Management/
 
 ```
 backend/
-â”œâ”€â”€ prisma/
-â”‚   â”œâ”€â”€ schema.prisma     Data model; single source of truth for the database
-â”‚   â”œâ”€â”€ migrations/       Generated SQL migrations, committed and applied on deploy
-â”‚   â””â”€â”€ seed/             Deterministic 10,000-employee seed and its reference data (names, titles, salary bands)
-â”œâ”€â”€ scripts/
-â”‚   â””â”€â”€ generate-hash.ts  One-off: turns a plain password into the bcrypt hash stored in HR_PASSWORD_HASH
-â”œâ”€â”€ src/
-â”‚   â”œâ”€â”€ server.ts         Entry point: load config, build the app, listen
-â”‚   â”œâ”€â”€ app.ts            Builds the Express app from injected dependencies; no listen(), so tests import it directly
-â”‚   â”œâ”€â”€ config/           Reads and validates env vars at startup; the app refuses to boot if one is missing
-â”‚   â”œâ”€â”€ routes/           Maps URLs to controllers; separates the public router from the protected ones
-â”‚   â”œâ”€â”€ controllers/      HTTP only: take validated input, call a service, choose status code and response shape
-â”‚   â”œâ”€â”€ services/         Use cases (list employees, compute peer positionâ€¦); no Express, no Prisma
-â”‚   â”œâ”€â”€ repositories/     The only code that touches Prisma, including the raw SQL for analytics
-â”‚   â”œâ”€â”€ domain/           Pure business rules with no I/O: peer-position classification, pagination limits
-â”‚   â”œâ”€â”€ validation/       Zod schemas for request bodies, route params and query strings
-â”‚   â”œâ”€â”€ middleware/       requireAuth, validate, login rate limiter, 404 handler, error handler
-â”‚   â”œâ”€â”€ errors/           Typed application errors (NotFound, Validation, Unauthorized) and their HTTP status
-â”‚   â””â”€â”€ lib/              Infrastructure helpers: Prisma client, logger, JWT and password hashing
-â””â”€â”€ tests/
-    â”œâ”€â”€ unit/             Domain, services and routes against in-memory fake repositories; no database, milliseconds
-    â”œâ”€â”€ integration/      Repositories and key API flows against a real PostgreSQL test database
-    â””â”€â”€ helpers/          Test data builders, database reset, token helper
+├── prisma/
+│   ├── schema.prisma     Data model; single source of truth for the database
+│   ├── migrations/       Generated SQL migrations, committed and applied on deploy
+│   └── seed/             Deterministic 10,000-employee seed and its reference data (names, titles, salary bands)
+├── scripts/
+│   └── generate-hash.ts  One-off: turns a plain password into the bcrypt hash stored in HR_PASSWORD_HASH
+├── src/
+│   ├── server.ts         Entry point: load config, build the app, listen
+│   ├── app.ts            Builds the Express app from injected dependencies; no listen(), so tests import it directly
+│   ├── config/           Reads and validates env vars at startup; the app refuses to boot if one is missing
+│   ├── routes/           Maps URLs to controllers; separates the public router from the protected ones
+│   ├── controllers/      HTTP only: take validated input, call a service, choose status code and response shape
+│   ├── services/         Use cases (list employees, compute peer position…); no Express, no Prisma
+│   ├── repositories/     The only code that touches Prisma, including the raw SQL for analytics
+│   ├── domain/           Pure business rules with no I/O: peer-position classification, pagination limits
+│   ├── validation/       Zod schemas for request bodies, route params and query strings
+│   ├── middleware/       requireAuth, validate, login rate limiter, 404 handler, error handler
+│   ├── errors/           Typed application errors (NotFound, Validation, Unauthorized) and their HTTP status
+│   └── lib/              Infrastructure helpers: Prisma client, logger, JWT and password hashing
+└── tests/
+    ├── unit/             Domain, services and routes against in-memory fake repositories; no database, milliseconds
+    ├── integration/      Repositories and key API flows against a real PostgreSQL test database
+    └── helpers/          Test data builders, database reset, token helper
 ```
 
-Dependencies point one way: `routes â†’ controllers â†’ services â†’ repositories + domain`. Services depend on repository interfaces. `app.ts` is the composition root: it wires Prisma-backed repositories in production and in-memory fakes in unit tests.
+Dependencies point one way: `routes → controllers → services → repositories + domain`. Services depend on repository interfaces. `app.ts` is the composition root: it wires Prisma-backed repositories in production and in-memory fakes in unit tests.
 
 ## 3. Frontend structure
 
 ```
 frontend/
-â”œâ”€â”€ public/               Static files served as-is (favicon)
-â”œâ”€â”€ vercel.json           SPA rewrite so client-side routes survive a refresh
-â””â”€â”€ src/
-    â”œâ”€â”€ main.tsx          Entry: mounts providers (router, query client, auth)
-    â”œâ”€â”€ app/              App shell: route table, layout and navigation, ProtectedRoute
-    â”œâ”€â”€ features/
-    â”‚   â”œâ”€â”€ auth/         Login page, auth context, token storage
-    â”‚   â”œâ”€â”€ employees/    Directory, detail page with peer position, add/edit form, delete confirmation
-    â”‚   â””â”€â”€ insights/     Pay-by-country and pay-by-role screens
-    â”œâ”€â”€ components/       Shared app components: DataTable, Pagination, ConfirmDialog, Money, EmptyState
-    â”‚   â””â”€â”€ ui/           shadcn/ui primitives, generated into the repo; we own this code
-    â”œâ”€â”€ lib/              API client (fetch wrapper), money formatting, query-string helpers
-    â””â”€â”€ test/             Vitest and Testing Library setup, MSW API mocks, render helpers
+├── public/               Static files served as-is (favicon)
+├── vercel.json           SPA rewrite so client-side routes survive a refresh
+└── src/
+    ├── main.tsx          Entry: mounts providers (router, query client, auth)
+    ├── app/              App shell: route table, layout and navigation, ProtectedRoute
+    ├── features/
+    │   ├── auth/         Login page, auth context, token storage
+    │   ├── employees/    Directory, detail page with peer position, add/edit form, delete confirmation
+    │   └── insights/     Pay-by-country and pay-by-role screens
+    ├── components/       Shared app components: DataTable, Pagination, ConfirmDialog, Money, EmptyState
+    │   └── ui/           shadcn/ui primitives, generated into the repo; we own this code
+    ├── lib/              API client (fetch wrapper), money formatting, query-string helpers
+    └── test/             Vitest and Testing Library setup, MSW API mocks, render helpers
 ```
 
 Each feature folder holds its own pages, components, API calls and data hooks, so code that changes together lives together. Tests sit next to the file they test (`*.test.tsx`).
@@ -216,7 +216,7 @@ All paths are under `/api`; requests and responses are JSON.
 - **CORS is not access control:** it is a browser rule that curl ignores. The JWT is what protects the data.
 
 ### Also decided
-- **Peer position:** the repository returns the count and average salary of employees with the same country and job title, excluding the employee. A pure domain function turns salary, peer average and peer count into the % difference and label. Fewer than 3 peers gives "Not enough peers"; within Â±5% inclusive gives "At average"; otherwise "Below" or "Above". It is unit-tested at the boundaries: exactly 5%, exactly 3 peers.
+- **Peer position:** the repository returns the count and average salary of employees with the same country and job title, excluding the employee. A pure domain function turns salary, peer average and peer count into the % difference and label. Fewer than 3 peers gives "Not enough peers"; within ±5% inclusive gives "At average"; otherwise "Below" or "Above". It is unit-tested at the boundaries: exactly 5%, exactly 3 peers.
 - **Job-title lookup:** `/api/job-titles` is served by the `(countryCode, jobTitle)` composite index, so no separate index is needed. Filtered by country, it reads only that country's slice of the index; unfiltered, a DISTINCT over 10,000 rows takes milliseconds anyway.
 - **Test layers:** domain rules are tested as pure functions. Services and routes are tested with in-memory fake repositories (supertest against `app.ts`), which is fast with no database. Repositories and raw SQL run against real Postgres: Docker locally, a service container in CI, tables truncated between tests. The frontend uses Vitest, Testing Library and MSW.
 - **Errors:** services throw typed errors, and one error handler maps them to a status and the shared error shape. Unknown errors return a generic 500; stack traces are logged, never sent to the client.
