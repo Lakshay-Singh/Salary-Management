@@ -1,6 +1,7 @@
 import type { Express } from 'express';
 import request from 'supertest';
 import { bearerFor } from '../helpers/auth';
+import { invalidFields } from '../helpers/errors';
 import { InMemoryEmployeeRepository } from '../helpers/fakeRepositories';
 import { buildTestApp } from '../helpers/testApp';
 
@@ -22,12 +23,6 @@ const invalidEmployees: [string, object, string][] = [
   ['a negative salary', { ...validEmployee, salary: -1 }, 'salary'],
   ['a zero salary', { ...validEmployee, salary: 0 }, 'salary'],
 ];
-
-interface ErrorBody {
-  error: { code: string; details?: { field: string }[] };
-}
-
-const invalidFields = (body: ErrorBody) => (body.error.details ?? []).map((detail) => detail.field);
 
 const employeeNotFound = (id: number | string) => ({
   error: { code: 'NOT_FOUND', message: `Employee ${id} not found` },

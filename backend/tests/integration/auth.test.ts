@@ -2,18 +2,13 @@ import type { Express } from 'express';
 import request from 'supertest';
 import { verifyToken } from '../../src/lib/jwt';
 import { TEST_JWT_SECRET, TEST_PASSWORD, TEST_USERNAME } from '../helpers/auth';
+import { invalidFields } from '../helpers/errors';
 import { buildTestApp } from '../helpers/testApp';
 
 // Wrong username and wrong password get exactly this response, so the API never reveals which usernames exist
 const INVALID_CREDENTIALS = {
   error: { code: 'INVALID_CREDENTIALS', message: 'Invalid username or password' },
 };
-
-interface ErrorBody {
-  error: { code: string; details?: { field: string }[] };
-}
-
-const invalidFields = (body: ErrorBody) => (body.error.details ?? []).map((detail) => detail.field).sort();
 
 describe('POST /api/auth/login', () => {
   // A fresh app per test gives every test its own rate-limit counter
