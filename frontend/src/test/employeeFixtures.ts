@@ -25,12 +25,20 @@ interface FormEntries {
   salary?: string
 }
 
-/** Fills the employee form the way a user would, waiting for the country list to load first. */
+/**
+ * Fills the employee form the way a user would, waiting for the country list to load first.
+ * The job title is pasted rather than typed: it is the longest entry, and typing the whole form one key at a time
+ * took these tests close to their time limit when every test file runs at once. EmployeeForm's job title tests
+ * cover typing into that field.
+ */
 export async function fillEmployeeForm({ fullName, jobTitle, countryCode, salary }: FormEntries) {
   const user = userEvent.setup()
   await screen.findByRole('option', { name: 'India' })
   if (fullName !== undefined) await user.type(screen.getByLabelText('Full name'), fullName)
-  if (jobTitle !== undefined) await user.type(screen.getByLabelText('Job title'), jobTitle)
+  if (jobTitle !== undefined) {
+    await user.click(screen.getByLabelText('Job title'))
+    await user.paste(jobTitle)
+  }
   if (countryCode !== undefined) await user.selectOptions(screen.getByLabelText('Country'), countryCode)
   if (salary !== undefined) await user.type(screen.getByLabelText('Salary'), salary)
 }
