@@ -5,6 +5,7 @@ import {
   deleteEmployee,
   getCountries,
   getEmployee,
+  getPeerPosition,
   getJobTitles,
   listEmployees,
   updateEmployee,
@@ -152,5 +153,23 @@ describe('deleteEmployee', () => {
     await deleteEmployee('1')
 
     expect(api.delete).toHaveBeenCalledWith('/api/employees/1')
+  })
+})
+
+describe('getPeerPosition', () => {
+  it("requests how the employee's salary compares with their peers", async () => {
+    const position = { peerCount: 3, peerAverage: 1_000_000, percentageDiff: 20, label: 'Above average' }
+    get.mockResolvedValueOnce(position)
+
+    expect(await getPeerPosition('1')).toEqual(position)
+    expect(requestedPath()).toBe('/api/employees/1/peer-position')
+  })
+
+  it('encodes the id, which comes straight from the page URL', async () => {
+    get.mockResolvedValueOnce({})
+
+    await getPeerPosition('a/b')
+
+    expect(requestedPath()).toBe('/api/employees/a%2Fb/peer-position')
   })
 })

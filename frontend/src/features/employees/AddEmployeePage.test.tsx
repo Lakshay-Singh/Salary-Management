@@ -83,6 +83,13 @@ describe('AddEmployeePage', () => {
     expect(screen.getByRole('heading', { name: 'Add employee' })).toBeInTheDocument()
   })
 
+  it('has no peer position section: a new employee has nothing to compare yet', async () => {
+    renderAddPage()
+    await screen.findByRole('option', { name: 'India' })
+
+    expect(screen.queryByRole('region', { name: 'Peer position' })).not.toBeInTheDocument()
+  })
+
   it('Cancel returns to the directory without saving', async () => {
     renderAddPage()
     await screen.findByRole('option', { name: 'India' })

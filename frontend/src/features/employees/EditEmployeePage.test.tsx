@@ -5,12 +5,20 @@ import { ApiError } from '@/lib/api'
 import { ASHA, COUNTRIES, JOB_TITLES } from '@/test/employeeFixtures'
 import { renderRoutes } from '@/test/renderRoutes'
 import { EditEmployeePage } from './EditEmployeePage'
-import { deleteEmployee, getCountries, getEmployee, getJobTitles, updateEmployee } from './employeesApi'
+import {
+  deleteEmployee,
+  getCountries,
+  getEmployee,
+  getJobTitles,
+  getPeerPosition,
+  updateEmployee,
+} from './employeesApi'
 
 vi.mock('./employeesApi', () => ({
   getCountries: vi.fn(),
   getJobTitles: vi.fn(),
   getEmployee: vi.fn(),
+  getPeerPosition: vi.fn(),
   updateEmployee: vi.fn(),
   deleteEmployee: vi.fn(),
 }))
@@ -19,6 +27,12 @@ beforeEach(() => {
   vi.mocked(getCountries).mockResolvedValue(COUNTRIES)
   vi.mocked(getJobTitles).mockResolvedValue(JOB_TITLES)
   vi.mocked(getEmployee).mockResolvedValue(ASHA)
+  vi.mocked(getPeerPosition).mockResolvedValue({
+    peerCount: 3,
+    peerAverage: 1_000_000,
+    percentageDiff: 20,
+    label: 'Above average',
+  })
   vi.mocked(updateEmployee).mockResolvedValue({ ...ASHA, salary: 1_600_000 })
   vi.mocked(deleteEmployee).mockResolvedValue(undefined)
 })
@@ -67,6 +81,26 @@ describe('EditEmployeePage', () => {
       countryCode: 'IN',
       salary: 1_600_000,
     })
+  })
+
+  it("shows the employee's peer position below the form", async () => {
+    renderEditPage()
+    await waitForPrefilledForm()
+
+    const peerPosition = await screen.findByRole('region', { name: 'Peer position' })
+
+    expect(await within(peerPosition).findByText('Above average')).toBeInTheDocument()
+    expect(getPeerPosition).toHaveBeenCalledWith('1')
+  })
+
+  it('shows no peer position, and never asks for one, when there is no such employee', async () => {
+    vi.mocked(getEmployee).mockRejectedValueOnce(new ApiError(404, 'NOT_FOUND', 'Employee 999 not found'))
+    renderEditPage('999')
+
+    await screen.findByRole('heading', { name: 'Employee not found' })
+
+    expect(screen.queryByRole('region', { name: 'Peer position' })).not.toBeInTheDocument()
+    expect(getPeerPosition).not.toHaveBeenCalled()
   })
 
   it('says so when no employee has that id, with a way back to the directory', async () => {
