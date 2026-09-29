@@ -1,5 +1,16 @@
 import { Banknote, ChartColumn, LogOut, Users } from 'lucide-react'
 import { NavLink, Outlet, useNavigate } from 'react-router'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog'
 import { Button } from '@/components/ui/button'
 import { tokenStorage } from '@/features/auth/tokenStorage'
 import { cn } from '@/lib/utils'
@@ -44,10 +55,22 @@ export function AppShell() {
               </NavLink>
             ))}
           </nav>
-          <Button variant="ghost" size="sm" className="ml-auto" onClick={signOut}>
-            <LogOut aria-hidden />
-            Sign out
-          </Button>
+          <AlertDialog>
+            <AlertDialogTrigger render={<Button variant="ghost" size="sm" className="ml-auto" />}>
+              <LogOut aria-hidden />
+              Sign out
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Sign out?</AlertDialogTitle>
+                <AlertDialogDescription>Are you sure you want to sign out?</AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={signOut}>Sign out</AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </div>
       </header>
       <main className="mx-auto max-w-6xl px-4 py-6">
