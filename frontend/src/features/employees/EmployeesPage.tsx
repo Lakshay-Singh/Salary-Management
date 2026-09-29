@@ -1,6 +1,7 @@
-import { ChevronLeft, ChevronRight, CircleAlert, Search } from 'lucide-react'
+import { ChevronLeft, ChevronRight, CircleAlert, Plus, Search } from 'lucide-react'
 import { useMemo } from 'react'
-import { Button } from '@/components/ui/button'
+import { Link, useLocation } from 'react-router'
+import { Button, buttonVariants } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select'
 import { cn } from '@/lib/utils'
@@ -9,6 +10,7 @@ import { EmployeeTable } from './EmployeeTable'
 import { useDirectoryParams } from './useDirectoryParams'
 import { useEmployeesList } from './useEmployeesList'
 import { useCountries, useJobTitles } from './useReferenceData'
+import { returnToState } from './useReturnTo'
 
 const PAGE_SIZE = 25
 const SEARCH_DEBOUNCE_MS = 300
@@ -43,12 +45,20 @@ export function EmployeesPage() {
     [countries.data],
   )
   const totalPages = Math.max(employees.data?.totalPages ?? 1, 1)
+  // Adding or editing returns to exactly this view: same filters, sort and page
+  const backHere = returnToState(useLocation())
 
   return (
     <section className="space-y-6">
-      <div className="space-y-1">
-        <h1>Employees</h1>
-        <p className="text-sm text-muted-foreground">Everyone at ACME, with pay shown in each person's local currency.</p>
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <div className="space-y-1">
+          <h1>Employees</h1>
+          <p className="text-sm text-muted-foreground">Everyone at ACME, with pay shown in each person's local currency.</p>
+        </div>
+        <Link to="/employees/new" state={backHere} className={buttonVariants({ size: 'lg' })}>
+          <Plus aria-hidden />
+          Add employee
+        </Link>
       </div>
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
@@ -110,6 +120,15 @@ export function EmployeesPage() {
         <div className={cn('transition-opacity duration-150', employees.isPlaceholderData && 'opacity-60')}>
           <EmployeeTable
             employees={employees.data?.data ?? []}
+            renderName={(employee) => (
+              <Link
+                to={`/employees/${employee.id}/edit`}
+                state={backHere}
+                className="rounded-sm underline-offset-4 transition-colors duration-150 outline-none hover:text-primary hover:underline focus-visible:ring-3 focus-visible:ring-ring/25"
+              >
+                {employee.fullName}
+              </Link>
+            )}
             countryNames={countryNames}
             isLoading={employees.isLoading}
             sortBy={params.sortBy}

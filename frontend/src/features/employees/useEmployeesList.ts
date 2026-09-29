@@ -5,6 +5,7 @@ import { type EmployeeListParams, listEmployees } from './employeesApi'
 export const employeeKeys = {
   all: ['employees'] as const,
   list: (params: EmployeeListParams) => [...employeeKeys.all, 'list', params] as const,
+  detail: (id: string) => [...employeeKeys.all, 'detail', id] as const,
 }
 
 /** One page of the directory. The previous page stays on screen while the next one loads. */

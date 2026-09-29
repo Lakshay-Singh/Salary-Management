@@ -1,5 +1,7 @@
 import { createBrowserRouter, Navigate, type RouteObject } from 'react-router'
 import { LoginPage } from '@/features/auth/LoginPage'
+import { AddEmployeePage } from '@/features/employees/AddEmployeePage'
+import { EditEmployeePage } from '@/features/employees/EditEmployeePage'
 import { EmployeesPage } from '@/features/employees/EmployeesPage'
 import { InsightsPage } from '@/features/insights/InsightsPage'
 import { AppShell } from './AppShell'
@@ -16,6 +18,8 @@ export const routes: RouteObject[] = [
         children: [
           { path: '/', element: <Navigate to="/employees" replace /> },
           { path: '/employees', element: <EmployeesPage /> },
+          { path: '/employees/new', element: <AddEmployeePage /> },
+          { path: '/employees/:id/edit', element: <EditEmployeePage /> },
           { path: '/insights', element: <InsightsPage /> },
         ],
       },

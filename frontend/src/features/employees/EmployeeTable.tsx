@@ -1,4 +1,5 @@
 import { ArrowDown, ArrowUp, ArrowUpDown, SearchX } from 'lucide-react'
+import type { ReactNode } from 'react'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { formatSalary } from '@/lib/formatSalary'
@@ -24,6 +25,8 @@ const SKELETON_ROWS = 10
 
 interface EmployeeTableProps {
   employees: Employee[]
+  /** How each name is shown, e.g. as a link to the edit page; plain text when not given. */
+  renderName?: (employee: Employee) => ReactNode
   /** Country names by country code; a code with no name is shown as the code. */
   countryNames?: Partial<Record<string, string>>
   isLoading: boolean
@@ -33,7 +36,15 @@ interface EmployeeTableProps {
   onSort: (sortBy: EmployeeSortField, sortOrder: SortOrder) => void
 }
 
-export function EmployeeTable({ employees, countryNames = {}, isLoading, sortBy, sortOrder, onSort }: EmployeeTableProps) {
+export function EmployeeTable({
+  employees,
+  renderName = (employee) => employee.fullName,
+  countryNames = {},
+  isLoading,
+  sortBy,
+  sortOrder,
+  onSort,
+}: EmployeeTableProps) {
   return (
     <div className="overflow-hidden rounded-xl border bg-card shadow-card">
       <Table
@@ -57,6 +68,7 @@ export function EmployeeTable({ employees, countryNames = {}, isLoading, sortBy,
               <EmployeeRow
                 key={employee.id}
                 employee={employee}
+                name={renderName(employee)}
                 countryName={countryNames[employee.countryCode] ?? employee.countryCode}
               />
             ))
@@ -95,11 +107,11 @@ function SortableHeader({ column, sortBy, sortOrder, onSort }: SortableHeaderPro
   )
 }
 
-function EmployeeRow({ employee, countryName }: { employee: Employee; countryName: string }) {
+function EmployeeRow({ employee, name, countryName }: { employee: Employee; name: ReactNode; countryName: string }) {
   return (
     <TableRow>
       <TableCell className="text-muted-foreground tabular-nums">{employee.id}</TableCell>
-      <TableCell className="font-medium">{employee.fullName}</TableCell>
+      <TableCell className="font-medium">{name}</TableCell>
       <TableCell>{employee.jobTitle}</TableCell>
       <TableCell>{countryName}</TableCell>
       <TableCell className="text-right tabular-nums">{formatSalary(employee.salary, employee.currencyCode)}</TableCell>

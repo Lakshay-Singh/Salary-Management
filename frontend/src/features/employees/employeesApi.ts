@@ -58,3 +58,22 @@ export const getCountries = () => api.get<Country[]>('/api/countries')
 
 export const getJobTitles = (countryCode?: string) =>
   api.get<JobTitle[]>(withQuery('/api/job-titles', [['countryCode', countryCode]]))
+
+/** What the API accepts for create and full replace; the currency is always derived from the country. */
+export interface EmployeeInput {
+  fullName: string
+  jobTitle: string
+  countryCode: string
+  salary: number
+}
+
+// The id comes from the page URL, so it is encoded rather than trusted to be a plain number
+const employeePath = (id: string) => `/api/employees/${encodeURIComponent(id)}`
+
+export const getEmployee = (id: string) => api.get<Employee>(employeePath(id))
+
+export const createEmployee = (input: EmployeeInput) => api.post<Employee>('/api/employees', input)
+
+export const updateEmployee = (id: string, input: EmployeeInput) => api.put<Employee>(employeePath(id), input)
+
+export const deleteEmployee = (id: string) => api.delete(employeePath(id))
