@@ -24,6 +24,8 @@ const SKELETON_ROWS = 10
 
 interface EmployeeTableProps {
   employees: Employee[]
+  /** Country names by country code; a code with no name is shown as the code. */
+  countryNames?: Partial<Record<string, string>>
   isLoading: boolean
   sortBy: EmployeeSortField
   sortOrder: SortOrder
@@ -31,7 +33,7 @@ interface EmployeeTableProps {
   onSort: (sortBy: EmployeeSortField, sortOrder: SortOrder) => void
 }
 
-export function EmployeeTable({ employees, isLoading, sortBy, sortOrder, onSort }: EmployeeTableProps) {
+export function EmployeeTable({ employees, countryNames = {}, isLoading, sortBy, sortOrder, onSort }: EmployeeTableProps) {
   return (
     <div className="overflow-hidden rounded-xl border bg-card shadow-card">
       <Table
@@ -51,7 +53,13 @@ export function EmployeeTable({ employees, isLoading, sortBy, sortOrder, onSort 
           ) : employees.length === 0 ? (
             <EmptyRow />
           ) : (
-            employees.map((employee) => <EmployeeRow key={employee.id} employee={employee} />)
+            employees.map((employee) => (
+              <EmployeeRow
+                key={employee.id}
+                employee={employee}
+                countryName={countryNames[employee.countryCode] ?? employee.countryCode}
+              />
+            ))
           )}
         </TableBody>
       </Table>
@@ -87,13 +95,13 @@ function SortableHeader({ column, sortBy, sortOrder, onSort }: SortableHeaderPro
   )
 }
 
-function EmployeeRow({ employee }: { employee: Employee }) {
+function EmployeeRow({ employee, countryName }: { employee: Employee; countryName: string }) {
   return (
     <TableRow>
       <TableCell className="text-muted-foreground tabular-nums">{employee.id}</TableCell>
       <TableCell className="font-medium">{employee.fullName}</TableCell>
       <TableCell>{employee.jobTitle}</TableCell>
-      <TableCell>{employee.countryCode}</TableCell>
+      <TableCell>{countryName}</TableCell>
       <TableCell className="text-right tabular-nums">{formatSalary(employee.salary, employee.currencyCode)}</TableCell>
     </TableRow>
   )
