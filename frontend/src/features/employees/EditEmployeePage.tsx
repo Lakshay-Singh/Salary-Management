@@ -18,6 +18,7 @@ import { ApiError } from '@/lib/api'
 import { EmployeeForm } from './EmployeeForm'
 import { EmployeePageHeader } from './EmployeePageHeader'
 import type { Employee } from './employeesApi'
+import { PeerPosition } from './PeerPosition'
 import { useEmployee } from './useEmployee'
 import { useDeleteEmployee, useUpdateEmployee } from './useEmployeeMutations'
 import { useReturnTo } from './useReturnTo'
@@ -80,6 +81,7 @@ export function EditEmployeePage() {
           />
         </CardContent>
       </Card>
+      <PeerPosition employee={current} />
     </section>
   )
 }

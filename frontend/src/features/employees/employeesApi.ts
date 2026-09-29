@@ -77,3 +77,17 @@ export const createEmployee = (input: EmployeeInput) => api.post<Employee>('/api
 export const updateEmployee = (id: string, input: EmployeeInput) => api.put<Employee>(employeePath(id), input)
 
 export const deleteEmployee = (id: string) => api.delete(employeePath(id))
+
+// Mirrors the API (backend/src/services/employee.service.ts): peers share the employee's country and job title
+export type PeerLabel = 'Above average' | 'At average' | 'Below average' | 'Not enough peers'
+
+export interface PeerPosition {
+  peerCount: number
+  /** Rounded to whole currency units; null when there are too few peers to compare with. */
+  peerAverage: number | null
+  /** Signed percentage from the peer average, e.g. 19.6 or -15; null alongside peerAverage. */
+  percentageDiff: number | null
+  label: PeerLabel
+}
+
+export const getPeerPosition = (id: string) => api.get<PeerPosition>(`${employeePath(id)}/peer-position`)
