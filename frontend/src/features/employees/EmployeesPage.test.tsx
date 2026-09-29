@@ -150,6 +150,20 @@ describe('EmployeesPage', () => {
     expect(screen.getByRole('button', { name: otherButton })).toBeEnabled()
   })
 
+  it('links to adding an employee', async () => {
+    renderPage()
+    await screen.findByText('Asha Rao')
+
+    expect(screen.getByRole('link', { name: 'Add employee' })).toHaveAttribute('href', '/employees/new')
+  })
+
+  it("links each employee's name to their edit page", async () => {
+    renderPage()
+
+    expect(await screen.findByRole('link', { name: 'Asha Rao' })).toHaveAttribute('href', '/employees/1/edit')
+    expect(screen.getByRole('link', { name: 'John Smith' })).toHaveAttribute('href', '/employees/2/edit')
+  })
+
   it('shows an error with a way to retry when the employees cannot be loaded', async () => {
     vi.mocked(listEmployees).mockRejectedValueOnce(new Error('network down'))
     renderPage()

@@ -1,9 +1,19 @@
 import { describe, expect, it, vi } from 'vitest'
 import { api } from '@/lib/apiClient'
-import { getCountries, getJobTitles, listEmployees } from './employeesApi'
+import {
+  createEmployee,
+  deleteEmployee,
+  getCountries,
+  getEmployee,
+  getJobTitles,
+  listEmployees,
+  updateEmployee,
+} from './employeesApi'
 
-vi.mock('@/lib/apiClient', () => ({ api: { get: vi.fn() } }))
+vi.mock('@/lib/apiClient', () => ({ api: { get: vi.fn(), post: vi.fn(), put: vi.fn(), delete: vi.fn() } }))
 const get = vi.mocked(api.get)
+
+const INPUT = { fullName: 'Asha Rao', jobTitle: 'Software Engineer', countryCode: 'IN', salary: 1_500_000 }
 
 const requestedPath = () => get.mock.calls[0][0]
 
@@ -94,5 +104,53 @@ describe('getJobTitles', () => {
     await getJobTitles('IN')
 
     expect(requestedPath()).toBe('/api/job-titles?countryCode=IN')
+  })
+})
+
+describe('getEmployee', () => {
+  it('requests one employee by id and returns it', async () => {
+    const employee = { id: 1, ...INPUT, currencyCode: 'INR' }
+    get.mockResolvedValueOnce(employee)
+
+    expect(await getEmployee('1')).toEqual(employee)
+    expect(requestedPath()).toBe('/api/employees/1')
+  })
+
+  it('encodes the id, which comes straight from the page URL', async () => {
+    get.mockResolvedValueOnce({})
+
+    await getEmployee('1/peer-position')
+
+    expect(requestedPath()).toBe('/api/employees/1%2Fpeer-position')
+  })
+})
+
+describe('createEmployee', () => {
+  it('posts the new employee and returns the created record', async () => {
+    const created = { id: 7, ...INPUT, currencyCode: 'INR' }
+    vi.mocked(api.post).mockResolvedValueOnce(created)
+
+    expect(await createEmployee(INPUT)).toEqual(created)
+    expect(api.post).toHaveBeenCalledWith('/api/employees', INPUT)
+  })
+})
+
+describe('updateEmployee', () => {
+  it('puts the full replacement to that employee and returns the result', async () => {
+    const updated = { id: 1, ...INPUT, currencyCode: 'INR' }
+    vi.mocked(api.put).mockResolvedValueOnce(updated)
+
+    expect(await updateEmployee('1', INPUT)).toEqual(updated)
+    expect(api.put).toHaveBeenCalledWith('/api/employees/1', INPUT)
+  })
+})
+
+describe('deleteEmployee', () => {
+  it('deletes that employee', async () => {
+    vi.mocked(api.delete).mockResolvedValueOnce(undefined)
+
+    await deleteEmployee('1')
+
+    expect(api.delete).toHaveBeenCalledWith('/api/employees/1')
   })
 })
