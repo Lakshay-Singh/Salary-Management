@@ -1,6 +1,7 @@
 import { CircleAlert, LoaderCircle } from 'lucide-react'
 import { type ChangeEvent, type FormEvent, type ReactNode, useId, useState } from 'react'
 import { Link } from 'react-router'
+import { Autocomplete } from '@/components/Autocomplete'
 import { Button, buttonVariants } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -86,21 +87,28 @@ export function EmployeeForm({
   const errorFor = (field: EmployeeField) =>
     editedSinceSubmit.has(field) ? undefined : (clientErrors[field] ?? serverErrors[field])
 
-  const fieldProps = (field: EmployeeField, hintId?: string) => {
+  const setField = (field: EmployeeField, value: string) => {
+    setValues((current) => ({ ...current, [field]: value }))
+    setEditedSinceSubmit((current) => new Set(current).add(field))
+  }
+
+  // What every field needs, whatever the control: its id and name, and its error linked for assistive technology
+  const identityProps = (field: EmployeeField, hintId?: string) => {
     const fieldError = errorFor(field)
     const describedBy = [fieldError && `${fieldId(field)}-error`, hintId].filter(Boolean).join(' ')
     return {
       id: fieldId(field),
       name: field,
-      value: values[field],
       'aria-invalid': fieldError ? true : undefined,
       'aria-describedby': describedBy || undefined,
-      onChange: (event: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-        setValues((current) => ({ ...current, [field]: event.target.value }))
-        setEditedSinceSubmit((current) => new Set(current).add(field))
-      },
     }
   }
+
+  const fieldProps = (field: EmployeeField, hintId?: string) => ({
+    ...identityProps(field, hintId),
+    value: values[field],
+    onChange: (event: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => setField(field, event.target.value),
+  })
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -117,7 +125,6 @@ export function EmployeeForm({
   }
 
   const salaryHintId = `${fieldId('salary')}-hint`
-  const jobTitleListId = `${fieldId('jobTitle')}-suggestions`
 
   return (
     // noValidate: the browser's own pop-ups would compete with the inline errors below
@@ -138,10 +145,13 @@ export function EmployeeForm({
         </Field>
 
         <Field label={FIELD_LABELS.jobTitle} htmlFor={fieldId('jobTitle')} error={errorFor('jobTitle')}>
-          <Input autoComplete="off" list={jobTitleListId} {...fieldProps('jobTitle')} />
-          <datalist id={jobTitleListId}>
-            {jobTitles.data?.map((title) => <option key={title} value={title} />)}
-          </datalist>
+          <Autocomplete
+            {...identityProps('jobTitle')}
+            value={values.jobTitle}
+            onValueChange={(jobTitle) => setField('jobTitle', jobTitle)}
+            suggestions={jobTitles.data ?? []}
+            listLabel="Job title suggestions"
+          />
         </Field>
 
         <Field label={FIELD_LABELS.countryCode} htmlFor={fieldId('countryCode')} error={errorFor('countryCode')}>

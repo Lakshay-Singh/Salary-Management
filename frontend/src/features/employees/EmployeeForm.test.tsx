@@ -1,4 +1,4 @@
-import { screen, waitFor } from '@testing-library/react'
+import { screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import type { ComponentProps } from 'react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
@@ -80,14 +80,114 @@ describe('EmployeeForm', () => {
     expect(screen.getByText('Enter a job title')).toBeInTheDocument()
   })
 
-  it('suggests the job titles already in use', async () => {
-    renderForm()
+  describe('job title', () => {
+    const jobTitleField = () => screen.getByRole('combobox', { name: 'Job title' })
+    const suggestionList = () => screen.findByRole('listbox', { name: 'Job title suggestions' })
+    const suggestions = async () =>
+      within(await suggestionList())
+        .getAllByRole('option')
+        .map((option) => option.textContent)
 
-    const listId = screen.getByLabelText('Job title').getAttribute('list') ?? ''
-    const suggestions = () =>
-      [...(document.getElementById(listId)?.querySelectorAll('option') ?? [])].map((option) => option.value)
+    it('is a plain text field, without the native datalist', () => {
+      renderForm()
 
-    await waitFor(() => expect(suggestions()).toEqual(JOB_TITLES))
+      expect(jobTitleField()).not.toHaveAttribute('list')
+      expect(document.querySelector('datalist')).not.toBeInTheDocument()
+    })
+
+    it('suggests the titles in use when clicked, narrowing them as you type', async () => {
+      renderForm()
+
+      await userEvent.click(jobTitleField())
+
+      expect(await suggestions()).toEqual(JOB_TITLES)
+      expect(jobTitleField()).toHaveAttribute('aria-expanded', 'true')
+
+      await userEvent.type(jobTitleField(), 'manager')
+
+      expect(await suggestions()).toEqual(['Engineering Manager'])
+    })
+
+    it('fills the field with a suggestion when it is clicked', async () => {
+      renderForm()
+      await userEvent.type(jobTitleField(), 'eng')
+
+      await userEvent.click(await screen.findByRole('option', { name: 'Software Engineer' }))
+
+      expect(jobTitleField()).toHaveValue('Software Engineer')
+      expect(screen.queryByRole('listbox')).not.toBeInTheDocument()
+    })
+
+    it('highlights suggestions with the arrow keys, and Enter fills the field with the highlighted one', async () => {
+      renderForm()
+      await userEvent.type(jobTitleField(), 'eng')
+      await suggestionList()
+
+      await userEvent.keyboard('{ArrowDown}{ArrowDown}')
+
+      const highlighted = screen.getByRole('option', { name: 'Software Engineer' })
+      expect(highlighted).toHaveAttribute('aria-selected', 'true')
+      expect(jobTitleField()).toHaveAttribute('aria-activedescendant', highlighted.id)
+
+      await userEvent.keyboard('{Enter}')
+
+      expect(jobTitleField()).toHaveValue('Software Engineer')
+      expect(screen.queryByRole('listbox')).not.toBeInTheDocument()
+      expect(screen.queryByText('Enter a full name')).not.toBeInTheDocument()
+    })
+
+    it('keeps what was typed when Enter is pressed with no suggestion highlighted', async () => {
+      renderForm()
+      await userEvent.type(jobTitleField(), 'Engineer')
+      await suggestionList()
+
+      await userEvent.keyboard('{Enter}')
+
+      expect(jobTitleField()).toHaveValue('Engineer')
+    })
+
+    it('keeps a new title, and closes the suggestions, when you click away', async () => {
+      renderForm()
+      await userEvent.type(jobTitleField(), 'Engineer')
+      await suggestionList()
+
+      await userEvent.click(screen.getByLabelText('Full name'))
+
+      expect(jobTitleField()).toHaveValue('Engineer')
+      expect(screen.queryByRole('listbox')).not.toBeInTheDocument()
+    })
+
+    it('keeps a new title, and closes the suggestions, on Escape', async () => {
+      renderForm()
+      await userEvent.type(jobTitleField(), 'Engineer')
+      await suggestionList()
+
+      await userEvent.keyboard('{Escape}')
+
+      expect(jobTitleField()).toHaveValue('Engineer')
+      expect(screen.queryByRole('listbox')).not.toBeInTheDocument()
+      expect(jobTitleField()).toHaveAttribute('aria-expanded', 'false')
+    })
+
+    it('takes the existing spelling of a title in use that was typed in a different case', async () => {
+      const { onSubmit } = renderForm()
+      await fillEmployeeForm({ fullName: 'Asha Rao', jobTitle: 'software engineer', countryCode: 'IN', salary: '1500000' })
+
+      expect(jobTitleField()).toHaveValue('Software Engineer')
+
+      await submit()
+
+      expect(onSubmit).toHaveBeenCalledWith(expect.objectContaining({ jobTitle: 'Software Engineer' }))
+    })
+
+    it('is marked invalid, and described by its error, when submitted blank', async () => {
+      renderForm()
+
+      await submit()
+
+      expect(jobTitleField()).toHaveAttribute('aria-invalid', 'true')
+      expect(jobTitleField()).toHaveAccessibleDescription('Enter a job title')
+    })
   })
 
   it('names the currency the salary is in once a country is chosen', async () => {
