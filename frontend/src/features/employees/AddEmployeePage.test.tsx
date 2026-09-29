@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { ApiError } from '@/lib/api'
 import { ASHA, COUNTRIES, fillEmployeeForm, JOB_TITLES } from '@/test/employeeFixtures'
+import { insightsKeys } from '@/features/insights/insightsKeys'
 import { renderRoutes } from '@/test/renderRoutes'
 import { AddEmployeePage } from './AddEmployeePage'
 import { createEmployee, getCountries, getJobTitles } from './employeesApi'
@@ -55,15 +56,17 @@ describe('AddEmployeePage', () => {
     expect(currentUrl()).toBe('/employees?countryCode=IN&page=3')
   })
 
-  it('marks cached employee lists as out of date, so the directory refreshes', async () => {
+  it('marks cached employee lists and pay insights as out of date, so both refresh', async () => {
     const { queryClient } = renderAddPage()
     const cachedList = employeeKeys.list({ page: 1 })
     queryClient.setQueryData(cachedList, { data: [], page: 1, pageSize: 25, total: 0, totalPages: 0 })
+    queryClient.setQueryData(insightsKeys.countries, [])
 
     await addAsha()
 
     await screen.findByText('Employee directory')
     expect(queryClient.getQueryState(cachedList)?.isInvalidated).toBe(true)
+    expect(queryClient.getQueryState(insightsKeys.countries)?.isInvalidated).toBe(true)
   })
 
   it("stays on the form, with the server's error beside the field, when the API rejects the employee", async () => {
