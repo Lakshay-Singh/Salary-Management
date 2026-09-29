@@ -33,6 +33,12 @@ describe('EmployeeTable', () => {
     ])
   })
 
+  it('shows the country name when one is known, and the code otherwise', () => {
+    renderTable({ countryNames: { IN: 'India' } })
+
+    expect(bodyRows().map((row) => cellTexts(row)[3])).toEqual(['India', 'US'])
+  })
+
   it('shows 10 placeholder rows, and marks the table busy, while loading', () => {
     renderTable({ employees: [], isLoading: true })
 
