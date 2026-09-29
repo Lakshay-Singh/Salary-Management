@@ -63,6 +63,7 @@
 
 /* Values are Tailwind v4 swatches, named alongside, so the palette stays recognisable */
 :root {
+    color-scheme: light;
     --radius: 0.5rem;
 
     --background: oklch(0.984 0.003 247.858);           /* slate-50: soft off-white page */
