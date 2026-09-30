@@ -12,7 +12,7 @@ The system was built test-first in small increments: the commit history shows fa
 
 ## Important links
 
-- [▶️ Watch the Video Demo here](link-goes-here)
+- [▶️ Watch the Video Demo here](https://drive.google.com/file/d/1T-LiLmNfSk7hBCd4q6EIc73OoV5lAAVg/view?usp=sharing)
 - **Live application:** the frontend runs on Vercel, and the API on Railway with its PostgreSQL database on Neon.
 
   | | |
