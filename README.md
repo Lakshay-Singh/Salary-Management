@@ -17,8 +17,12 @@ The system was built test-first in small increments: the commit history shows fa
 
   | | |
   |---|---|
-  | Frontend (Vercel) | salary-management-alpha.vercel.app |
+  | Frontend (Vercel) | https://salary-management-alpha.vercel.app |
   | API (Railway, database on Neon) | https://salary-management-production-8fc1.up.railway.app/api/health |
+
+**Demo Credentials for Live App:**
+- **Username:** `hr.manager`
+- **Password:** `local-dev-password`
 
 ## Documentation
 
