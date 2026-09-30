@@ -27,7 +27,14 @@ export function useCreateEmployee() {
 
 export function useUpdateEmployee(id: string) {
   const markStale = useMarkEmployeeDataStale()
-  return useMutation({ mutationFn: (input: EmployeeInput) => updateEmployee(id, input), onSuccess: markStale })
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (input: EmployeeInput) => updateEmployee(id, input),
+    onSuccess: (updatedEmployee) => {
+      queryClient.setQueryData(employeeKeys.detail(id), updatedEmployee)
+      markStale()
+    },
+  })
 }
 
 export function useDeleteEmployee(id: string) {
